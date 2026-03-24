@@ -1,19 +1,50 @@
 {
   "type": "object",
-  "title": "extractor configuration",
-  "required": [
-    "print_hello"
-  ],
+  "title": "Oracle Hyperion EPM — Connection Settings",
+  "required": ["hyperion_url", "username", "#password"],
   "properties": {
-    "print_hello": {
-      "type": "boolean",
-      "title": "Print Hello",
+    "hyperion_url": {
+      "type": "string",
+      "title": "Hyperion Server URL",
+      "description": "Base URL of the Hyperion EPM server including port (e.g. http://hyperiondev:9000)",
       "propertyOrder": 1
+    },
+    "username": {
+      "type": "string",
+      "title": "Username",
+      "description": "Shared Services (CSS) username",
+      "propertyOrder": 2
+    },
+    "#password": {
+      "type": "string",
+      "title": "Password",
+      "format": "password",
+      "propertyOrder": 3
+    },
+    "essbase_host": {
+      "type": "string",
+      "title": "Essbase Host",
+      "description": "Essbase server hostname or IP. Defaults to the host from Hyperion Server URL if left empty.",
+      "propertyOrder": 4
+    },
+    "essbase_port": {
+      "type": "integer",
+      "title": "Essbase REST API Port",
+      "description": "Port for Essbase 21C REST API (default: 9010)",
+      "default": 9010,
+      "propertyOrder": 5
+    },
+    "ssl_verify": {
+      "type": "boolean",
+      "title": "Verify SSL Certificate",
+      "default": true,
+      "propertyOrder": 6
     },
     "debug": {
       "type": "boolean",
-      "title": "Debug",
-      "propertyOrder": 2
+      "title": "Debug Mode",
+      "default": false,
+      "propertyOrder": 7
     }
   }
 }

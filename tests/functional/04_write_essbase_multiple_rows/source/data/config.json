@@ -1,0 +1,35 @@
+{
+  "action": "run",
+  "parameters": {
+    "hyperion_url": "http://34.31.58.133:9000",
+    "username": "admin",
+    "#password": "DUMMY_PASSWORD",
+    "essbase_host": "34.31.58.133",
+    "essbase_port": 9010,
+    "ssl_verify": false
+  },
+  "config_rows": [
+    {
+      "id": "write-cola",
+      "is_disabled": false,
+      "parameters": {
+        "module": "essbase",
+        "application": "Sample",
+        "database": "Basic",
+        "input_table": "essbase_cola",
+        "batch_size": 1000
+      }
+    },
+    {
+      "id": "write-root-beer",
+      "is_disabled": false,
+      "parameters": {
+        "module": "essbase",
+        "application": "Sample",
+        "database": "Basic",
+        "input_table": "essbase_root_beer",
+        "batch_size": 1000
+      }
+    }
+  ]
+}

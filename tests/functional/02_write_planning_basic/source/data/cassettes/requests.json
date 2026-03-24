@@ -1,0 +1,8 @@
+{
+  "_metadata": {"freeze_time": "2026-03-24T10:00:00", "keboola_vcr_version": "0.3.0", "recorded_at": "2026-03-24T10:00:01.000000+00:00"},
+  "interactions": [
+    {"request": {"body": "{\"username\": \"admin\", \"password\": \"DUMMY_PASSWORD\"}", "headers": {"Accept": ["application/json"], "Content-Length": ["50"], "Content-Type": ["application/json"]}, "method": "POST", "uri": "http://34.31.58.133:9000/interop/logon"}, "response": {"body": {"string": "{\"token\": \"DUMMY_TOKEN_ABC123\", \"userLocale\": \"en_US\"}"}, "headers": {"Content-Length": ["52"], "Content-Type": ["application/json"]}, "status": {"code": 200, "message": "OK"}}},
+    {"request": {"body": "{\"headers\": [\"Account\", \"Period\", \"Value\"], \"data\": [[\"Sales\", \"Jan\", \"1000\"], [\"COGS\", \"Jan\", \"500\"]]}", "headers": {"Accept": ["application/json"], "Authorization": ["Bearer DUMMY_TOKEN_ABC123"], "Content-Length": ["98"], "Content-Type": ["application/json"]}, "method": "POST", "uri": "http://34.31.58.133:9000/HyperionPlanning/rest/v3/applications/Vision/plantypes/Plan1/importdataslice"}, "response": {"body": {"string": "{\"status\": \"SUCCESS\", \"rowsImported\": 2}"}, "headers": {"Content-Length": ["39"], "Content-Type": ["application/json"]}, "status": {"code": 200, "message": "OK"}}}
+  ],
+  "version": 1
+}

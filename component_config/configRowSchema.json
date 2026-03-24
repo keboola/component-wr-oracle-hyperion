@@ -1,1 +1,56 @@
-{}
+{
+  "type": "object",
+  "title": "Write Configuration",
+  "required": ["module", "application", "input_table"],
+  "properties": {
+    "module": {
+      "type": "string",
+      "title": "Module",
+      "description": "Hyperion module to write into",
+      "enum": ["essbase", "planning"],
+      "default": "essbase",
+      "propertyOrder": 1
+    },
+    "application": {
+      "type": "string",
+      "title": "Application",
+      "description": "Essbase or Planning application name",
+      "propertyOrder": 2
+    },
+    "database": {
+      "type": "string",
+      "title": "Database / Cube",
+      "description": "Essbase database (cube) name. Required for Essbase module.",
+      "propertyOrder": 3,
+      "options": {
+        "dependencies": {
+          "module": "essbase"
+        }
+      }
+    },
+    "plan_type": {
+      "type": "string",
+      "title": "Plan Type",
+      "description": "Plan type name. Required for Planning module.",
+      "propertyOrder": 4,
+      "options": {
+        "dependencies": {
+          "module": "planning"
+        }
+      }
+    },
+    "input_table": {
+      "type": "string",
+      "title": "Input Table Name",
+      "description": "Name of the Keboola Storage input table (without .csv extension). CSV column headers must match Hyperion dimension names.",
+      "propertyOrder": 5
+    },
+    "batch_size": {
+      "type": "integer",
+      "title": "Batch Size",
+      "description": "Number of rows to send per API call (default: 1000).",
+      "default": 1000,
+      "propertyOrder": 6
+    }
+  }
+}
