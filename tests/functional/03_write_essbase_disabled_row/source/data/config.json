@@ -1,7 +1,6 @@
 {
   "action": "run",
   "parameters": {
-    "hyperion_url": "http://34.31.58.133:9000",
     "username": "admin",
     "#password": "DUMMY_PASSWORD",
     "essbase_host": "34.31.58.133",
@@ -17,7 +16,12 @@
         "application": "Sample",
         "database": "Basic",
         "input_table": "should_not_be_sent",
-        "batch_size": 1000
+        "batch_size": 1000,
+        "context_members": [
+          "East",
+          "Actual",
+          "Sales"
+        ]
       }
     },
     {
@@ -28,8 +32,23 @@
         "application": "Sample",
         "database": "Basic",
         "input_table": "essbase_sample_basic",
-        "batch_size": 1000
+        "batch_size": 1000,
+        "context_members": [
+          "East",
+          "Actual",
+          "Sales"
+        ]
       }
     }
-  ]
+  ],
+  "storage": {
+    "input": {
+      "tables": [
+        {
+          "source": "essbase_sample_basic_single.csv",
+          "destination": "essbase_sample_basic.csv"
+        }
+      ]
+    }
+  }
 }

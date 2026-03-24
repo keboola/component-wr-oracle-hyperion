@@ -1,0 +1,6 @@
+{
+  "has_header": true,
+  "delimiter": ",",
+  "enclosure": "\"",
+  "manifest_type": "in"
+}

@@ -1,0 +1,282 @@
+[
+  {
+    "name": "01_write_essbase_basic",
+    "description": "Write two rows to Essbase Sample/Basic via config_rows",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "username": "admin",
+        "#password": "DUMMY_PASSWORD",
+        "essbase_host": "34.31.58.133",
+        "essbase_port": 9010,
+        "ssl_verify": false
+      },
+      "config_rows": [
+        {
+          "id": "write-sample-basic",
+          "is_disabled": false,
+          "parameters": {
+            "module": "essbase",
+            "application": "Sample",
+            "database": "Basic",
+            "input_table": "essbase_sample_basic",
+            "batch_size": 1000,
+            "context_members": [
+              "East",
+              "Actual",
+              "Sales"
+            ]
+          }
+        }
+      ],
+      "storage": {
+        "input": {
+          "tables": [
+            {
+              "source": "essbase_sample_basic.csv",
+              "destination": "essbase_sample_basic.csv"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "03_write_essbase_disabled_row",
+    "description": "Disabled config_row is skipped; only active row writes to Essbase",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "username": "admin",
+        "#password": "DUMMY_PASSWORD",
+        "essbase_host": "34.31.58.133",
+        "essbase_port": 9010,
+        "ssl_verify": false
+      },
+      "config_rows": [
+        {
+          "id": "disabled-row",
+          "is_disabled": true,
+          "parameters": {
+            "module": "essbase",
+            "application": "Sample",
+            "database": "Basic",
+            "input_table": "should_not_be_sent",
+            "batch_size": 1000,
+            "context_members": [
+              "East",
+              "Actual",
+              "Sales"
+            ]
+          }
+        },
+        {
+          "id": "active-row",
+          "is_disabled": false,
+          "parameters": {
+            "module": "essbase",
+            "application": "Sample",
+            "database": "Basic",
+            "input_table": "essbase_sample_basic",
+            "batch_size": 1000,
+            "context_members": [
+              "East",
+              "Actual",
+              "Sales"
+            ]
+          }
+        }
+      ],
+      "storage": {
+        "input": {
+          "tables": [
+            {
+              "source": "essbase_sample_basic_single.csv",
+              "destination": "essbase_sample_basic.csv"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "04_write_essbase_multiple_rows",
+    "description": "Two active config_rows each writing a different Essbase table",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "username": "admin",
+        "#password": "DUMMY_PASSWORD",
+        "essbase_host": "34.31.58.133",
+        "essbase_port": 9010,
+        "ssl_verify": false
+      },
+      "config_rows": [
+        {
+          "id": "write-cola",
+          "is_disabled": false,
+          "parameters": {
+            "module": "essbase",
+            "application": "Sample",
+            "database": "Basic",
+            "input_table": "essbase_cola",
+            "batch_size": 1000,
+            "context_members": [
+              "East",
+              "Actual",
+              "Sales"
+            ]
+          }
+        },
+        {
+          "id": "write-root-beer",
+          "is_disabled": false,
+          "parameters": {
+            "module": "essbase",
+            "application": "Sample",
+            "database": "Basic",
+            "input_table": "essbase_root_beer",
+            "batch_size": 1000,
+            "context_members": [
+              "East",
+              "Actual",
+              "Sales"
+            ]
+          }
+        }
+      ],
+      "storage": {
+        "input": {
+          "tables": [
+            {
+              "source": "essbase_cola.csv",
+              "destination": "essbase_cola.csv"
+            },
+            {
+              "source": "essbase_root_beer.csv",
+              "destination": "essbase_root_beer.csv"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "05_write_essbase_batched",
+    "description": "batch_size=1 with 3 rows \u2014 verifies each row is sent as a separate POST",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "username": "admin",
+        "#password": "DUMMY_PASSWORD",
+        "essbase_host": "34.31.58.133",
+        "essbase_port": 9010,
+        "ssl_verify": false
+      },
+      "config_rows": [
+        {
+          "id": "write-batched",
+          "is_disabled": false,
+          "parameters": {
+            "module": "essbase",
+            "application": "Sample",
+            "database": "Basic",
+            "input_table": "essbase_three_rows",
+            "batch_size": 1,
+            "context_members": [
+              "East",
+              "Actual",
+              "Sales"
+            ]
+          }
+        }
+      ],
+      "storage": {
+        "input": {
+          "tables": [
+            {
+              "source": "essbase_three_rows.csv",
+              "destination": "essbase_three_rows.csv"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "06_write_essbase_flat_config",
+    "description": "No config_rows \u2014 row params are read directly from parameters (flat config fallback)",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "username": "admin",
+        "#password": "DUMMY_PASSWORD",
+        "essbase_host": "34.31.58.133",
+        "essbase_port": 9010,
+        "ssl_verify": false,
+        "module": "essbase",
+        "application": "Sample",
+        "database": "Basic",
+        "input_table": "essbase_sample_basic",
+        "batch_size": 1000,
+        "context_members": [
+          "East",
+          "Actual",
+          "Sales"
+        ]
+      },
+      "storage": {
+        "input": {
+          "tables": [
+            {
+              "source": "essbase_sample_basic.csv",
+              "destination": "essbase_sample_basic.csv"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "08_write_essbase_empty_table",
+    "description": "Input CSV has headers but zero data rows \u2014 component should log a warning and make no API calls",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "username": "admin",
+        "#password": "DUMMY_PASSWORD",
+        "essbase_host": "34.31.58.133",
+        "essbase_port": 9010,
+        "ssl_verify": false
+      },
+      "config_rows": [
+        {
+          "id": "write-empty",
+          "is_disabled": false,
+          "parameters": {
+            "module": "essbase",
+            "application": "Sample",
+            "database": "Basic",
+            "input_table": "essbase_empty",
+            "batch_size": 1000,
+            "context_members": [
+              "East",
+              "Actual",
+              "Sales"
+            ]
+          }
+        }
+      ],
+      "storage": {
+        "input": {
+          "tables": [
+            {
+              "source": "essbase_empty.csv",
+              "destination": "essbase_empty.csv"
+            }
+          ]
+        }
+      }
+    }
+  }
+]

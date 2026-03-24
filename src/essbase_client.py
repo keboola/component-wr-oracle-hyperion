@@ -27,17 +27,79 @@ class EssbaseClient:
     def get_databases(self, application: str) -> list[dict]:
         return self._get(f"/applications/{application}/databases").get("items", [])
 
-    def import_data_slice(self, application: str, database: str, headers: list[str], rows: list[list]) -> dict:
+    def import_data_slice(
+        self,
+        application: str,
+        database: str,
+        headers: list[str],
+        rows: list[list],
+        context_members: list[str] | None = None,
+    ) -> dict:
         """
-        POST a batch of data rows to Essbase importdataslice endpoint.
+        Load a batch of data rows into an Essbase BSO database via the 3-step dataload stream API.
 
-        Payload format:
-          {"headers": ["Product", "Jan", "Feb"], "data": [["Cola", "1710", "1666"], ...]}
+        BSO free-form data file format (text/plain):
+          <context_member>     ← one line per extra dimension (e.g. "East", "Actual", "Sales")
+          col1 col2 col3       ← column members from headers[1:]
+          row_member v1 v2 v3  ← headers[0] values; members with spaces are double-quoted
+
+        context_members sets default members for dimensions not represented as columns in the CSV.
         """
-        payload = {"headers": headers, "data": rows}
-        path = f"/applications/{application}/databases/{database}/importdataslice"
-        logging.debug("Essbase importdataslice: app=%s db=%s rows=%d", application, database, len(rows))
-        return self._post(path, payload)
+        path = f"/applications/{application}/databases/{database}/dataload"
+        data_text = self._build_bso_data(headers, rows, context_members or [])
+        logging.debug("Essbase dataload: app=%s db=%s rows=%d", application, database, len(rows))
+
+        stream_id = self._start_stream(path)
+        try:
+            self._push_data(f"{path}/{stream_id}", data_text)
+        except Exception:
+            self._end_stream(f"{path}/{stream_id}", expect_success=False)
+            raise
+        return self._end_stream(f"{path}/{stream_id}")
+
+    @staticmethod
+    def _quote(member: str) -> str:
+        return f'"{member}"' if " " in member else member
+
+    def _build_bso_data(self, headers: list[str], rows: list[list], context_members: list[str]) -> str:
+        lines = [self._quote(m) for m in context_members]
+        lines.append(" ".join(self._quote(h) for h in headers[1:]))
+        for row in rows:
+            lines.append(self._quote(str(row[0])) + " " + " ".join(str(v) for v in row[1:]))
+        return "\n".join(lines) + "\n"
+
+    def _start_stream(self, path: str) -> str:
+        url = f"{self.base_url}{path}"
+        try:
+            resp = self.session.post(url, json={}, verify=self.ssl_verify, timeout=60)
+            resp.raise_for_status()
+            return resp.json()["streamId"]
+        except (requests.HTTPError, requests.ConnectionError, KeyError) as e:
+            raise UserException(f"Essbase dataload: failed to start stream for {path}: {e}") from e
+
+    def _push_data(self, path: str, data: str) -> None:
+        url = f"{self.base_url}{path}"
+        try:
+            resp = self.session.post(url, data=data.encode(), headers={"Content-Type": "text/plain"}, verify=self.ssl_verify, timeout=300)
+            resp.raise_for_status()
+        except requests.HTTPError as e:
+            raise UserException(f"Essbase dataload: push failed [{e.response.status_code}]: {e.response.text}") from e
+        except requests.ConnectionError as e:
+            raise UserException(f"Essbase dataload: push connection error: {e}") from e
+
+    def _end_stream(self, path: str, expect_success: bool = True) -> dict:
+        url = f"{self.base_url}{path}"
+        try:
+            resp = self.session.delete(url, verify=self.ssl_verify, timeout=60)
+            resp.raise_for_status()
+            result = resp.json() if resp.content else {}
+            if expect_success and result.get("status", "").lower() != "data load completed successfully":
+                raise UserException(f"Essbase dataload failed: {result.get('errorMessage', result)}")
+            return result
+        except requests.HTTPError as e:
+            raise UserException(f"Essbase dataload: finalize failed [{e.response.status_code}]: {e.response.text}") from e
+        except requests.ConnectionError as e:
+            raise UserException(f"Essbase dataload: finalize connection error: {e}") from e
 
     def _get(self, path: str) -> Any:
         url = f"{self.base_url}{path}"
@@ -47,20 +109,5 @@ class EssbaseClient:
             return resp.json()
         except requests.HTTPError as e:
             raise UserException(f"Essbase API error [{e.response.status_code}] on GET {path}: {e.response.text}") from e
-        except requests.ConnectionError as e:
-            raise UserException(f"Cannot connect to Essbase at {self.base_url}: {e}") from e
-
-    def _post(self, path: str, payload: dict) -> Any:
-        url = f"{self.base_url}{path}"
-        try:
-            resp = self.session.post(url, json=payload, verify=self.ssl_verify, timeout=300)
-            resp.raise_for_status()
-            if resp.content:
-                return resp.json()
-            return {}
-        except requests.HTTPError as e:
-            raise UserException(
-                f"Essbase API error [{e.response.status_code}] on POST {path}: {e.response.text}"
-            ) from e
         except requests.ConnectionError as e:
             raise UserException(f"Cannot connect to Essbase at {self.base_url}: {e}") from e

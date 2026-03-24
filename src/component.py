@@ -2,7 +2,7 @@
 Oracle Hyperion EPM Writer — main component.
 
 Reads CSV tables from Keboola Storage and imports them into
-Essbase (21C REST API) or Hyperion Planning via importdataslice.
+Essbase (21C REST API) via the dataload streaming endpoint.
 """
 
 import csv
@@ -14,7 +14,6 @@ from keboola.component.exceptions import UserException
 
 from configuration import Configuration, RowConfiguration
 from essbase_client import EssbaseClient
-from planning_client import PlanningClient
 
 
 def _batched(iterable, size: int):
@@ -41,44 +40,26 @@ class Component(ComponentBase):
         else:
             rows_to_process = [RowConfiguration(**self.configuration.parameters)]
 
-        essbase_client = None
-        planning_client = None
+        client = None
 
         for row_params in rows_to_process:
             logging.info(
-                "Processing: module=%s app=%s table=%s",
-                row_params.module,
+                "Processing: app=%s db=%s table=%s",
                 row_params.application,
+                row_params.database,
                 row_params.input_table,
             )
-
-            if row_params.module == "essbase":
-                if essbase_client is None:
-                    essbase_client = self._build_essbase_client(self.params)
-                    version = essbase_client.verify_connection()
-                    logging.info("Connected to Essbase version: %s", version)
-                self._write_essbase(essbase_client, row_params)
-
-            elif row_params.module == "planning":
-                if planning_client is None:
-                    planning_client = self._build_planning_client(self.params)
-                self._write_planning(planning_client, row_params)
+            if client is None:
+                client = self._build_essbase_client(self.params)
+                version = client.verify_connection()
+                logging.info("Connected to Essbase version: %s", version)
+            self._write_essbase(client, row_params)
 
     def _build_essbase_client(self, params: Configuration) -> EssbaseClient:
-        host = params.get_essbase_host()
-        logging.info("Connecting to Essbase at %s:%d", host, params.essbase_port)
+        logging.info("Connecting to Essbase at %s:%d", params.essbase_host, params.essbase_port)
         return EssbaseClient(
-            host=host,
+            host=params.essbase_host,
             port=params.essbase_port,
-            username=params.username,
-            password=params.password,
-            ssl_verify=params.ssl_verify,
-        )
-
-    def _build_planning_client(self, params: Configuration) -> PlanningClient:
-        logging.info("Connecting to Hyperion Planning at %s", params.hyperion_url)
-        return PlanningClient(
-            base_url=params.hyperion_url,
             username=params.username,
             password=params.password,
             ssl_verify=params.ssl_verify,
@@ -92,29 +73,14 @@ class Component(ComponentBase):
 
         total = 0
         for batch in _batched(data_rows, row.batch_size):
-            client.import_data_slice(row.application, row.database, headers, batch)
+            client.import_data_slice(row.application, row.database, headers, batch, row.context_members)
             total += len(batch)
             logging.info("Essbase %s/%s: imported %d rows so far.", row.application, row.database, total)
         logging.info("Essbase write complete: %d total rows to %s/%s.", total, row.application, row.database)
 
-    def _write_planning(self, client: PlanningClient, row: RowConfiguration) -> None:
-        headers, data_rows = self._read_table(row.input_table)
-        if not headers:
-            logging.warning("Input table '%s' is empty — skipping.", row.input_table)
-            return
-
-        total = 0
-        for batch in _batched(data_rows, row.batch_size):
-            client.import_data_slice(row.application, row.plan_type, headers, batch)
-            total += len(batch)
-            logging.info("Planning %s/%s: imported %d rows so far.", row.application, row.plan_type, total)
-        logging.info("Planning write complete: %d total rows to %s/%s.", total, row.application, row.plan_type)
-
     def _read_table(self, table_name: str) -> tuple[list[str], list[list]]:
         """
         Read an input table from Keboola Storage and return (headers, rows_as_lists).
-
-        Rows are plain lists of string values — matching the importdataslice payload format directly.
         """
         target_name = f"{table_name}.csv"
         all_tables = self.get_input_tables_definitions()

@@ -1,56 +1,40 @@
 {
   "type": "object",
   "title": "Write Configuration",
-  "required": ["module", "application", "input_table"],
+  "required": ["application", "database", "input_table"],
   "properties": {
-    "module": {
-      "type": "string",
-      "title": "Module",
-      "description": "Hyperion module to write into",
-      "enum": ["essbase", "planning"],
-      "default": "essbase",
-      "propertyOrder": 1
-    },
     "application": {
       "type": "string",
       "title": "Application",
-      "description": "Essbase or Planning application name",
-      "propertyOrder": 2
+      "description": "Essbase application name",
+      "propertyOrder": 1
     },
     "database": {
       "type": "string",
       "title": "Database / Cube",
-      "description": "Essbase database (cube) name. Required for Essbase module.",
-      "propertyOrder": 3,
-      "options": {
-        "dependencies": {
-          "module": "essbase"
-        }
-      }
-    },
-    "plan_type": {
-      "type": "string",
-      "title": "Plan Type",
-      "description": "Plan type name. Required for Planning module.",
-      "propertyOrder": 4,
-      "options": {
-        "dependencies": {
-          "module": "planning"
-        }
-      }
+      "description": "Essbase database (cube) name",
+      "propertyOrder": 2
     },
     "input_table": {
       "type": "string",
       "title": "Input Table Name",
-      "description": "Name of the Keboola Storage input table (without .csv extension). CSV column headers must match Hyperion dimension names.",
-      "propertyOrder": 5
+      "description": "Name of the Keboola Storage input table (without .csv extension). The first CSV column is the row member; remaining columns are dense dimension members (e.g. time periods).",
+      "propertyOrder": 3
+    },
+    "context_members": {
+      "type": "array",
+      "title": "Context Members",
+      "description": "Default members for BSO dimensions not represented as columns in the input table (e.g. [\"East\", \"Actual\", \"Sales\"]). Order matches the Essbase outline.",
+      "items": {"type": "string"},
+      "default": [],
+      "propertyOrder": 4
     },
     "batch_size": {
       "type": "integer",
       "title": "Batch Size",
       "description": "Number of rows to send per API call (default: 1000).",
       "default": 1000,
-      "propertyOrder": 6
+      "propertyOrder": 5
     }
   }
 }
