@@ -9,7 +9,7 @@ on:
 concurrency: ci-${{ github.ref }}  # to avoid tag collisions in the ECR
 env:
   # repository variables:
-  KBC_DEVELOPERPORTAL_APP: keboola.keboola.wr-oracle-hyperion
+  KBC_DEVELOPERPORTAL_APP: keboola.wr-oracle-hyperion
   KBC_DEVELOPERPORTAL_VENDOR: keboola
   DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
   KBC_DEVELOPERPORTAL_USERNAME: ${{ vars.KBC_DEVELOPERPORTAL_USERNAME }}
@@ -130,9 +130,7 @@ jobs:
         run: |
           docker load --input /tmp/${{ env.KBC_DEVELOPERPORTAL_APP }}.tar
           docker image ls -a
-          docker run ${{ env.KBC_DEVELOPERPORTAL_APP }}:latest flake8 . --config=flake8.cfg
-          echo "Running unit-tests..."
-          docker run ${{ env.KBC_DEVELOPERPORTAL_APP }}:latest python -m unittest discover
+          docker run ${{ env.KBC_DEVELOPERPORTAL_APP }}:latest scripts/build_n_test.sh
 
   tests-kbc:
     name: Run KBC Tests
