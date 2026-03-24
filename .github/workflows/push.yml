@@ -70,6 +70,8 @@ jobs:
             TAG="$REF-${{ github.run_number }}"
           fi
           IS_SEMANTIC_TAG=$(echo "$REF" | grep -q '^[0-9]\+\.[0-9]\+\.[0-9]\+$' && echo true || echo false)
+          echo "app_image_tag=$TAG" | tee -a $GITHUB_OUTPUT
+          echo "is_semantic_tag=$IS_SEMANTIC_TAG" | tee -a $GITHUB_OUTPUT
 
       - name: Deploy-Ready check
         id: deploy_ready
@@ -172,7 +174,7 @@ jobs:
           name: ${{ env.KBC_DEVELOPERPORTAL_APP }}
           path: /tmp
 
-      - name: Load Image & Run Tests
+      - name: Load Image
         run: |
           docker load --input /tmp/${{ env.KBC_DEVELOPERPORTAL_APP }}.tar
           docker image ls -a
