@@ -132,7 +132,7 @@ jobs:
         run: |
           docker load --input /tmp/${{ env.KBC_DEVELOPERPORTAL_APP }}.tar
           docker image ls -a
-          docker run ${{ env.KBC_DEVELOPERPORTAL_APP }}:latest scripts/build_n_test.sh
+          docker run ${{ env.KBC_DEVELOPERPORTAL_APP }}:latest sh scripts/build_n_test.sh
 
   tests-kbc:
     name: Run KBC Tests
