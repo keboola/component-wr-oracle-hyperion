@@ -9,7 +9,8 @@
         "#password": "DUMMY_PASSWORD",
         "essbase_host": "34.31.58.133",
         "essbase_port": 9010,
-        "ssl_verify": false
+        "ssl_verify": false,
+        "use_ssl": false
       },
       "config_rows": [
         {
@@ -54,7 +55,8 @@
         "#password": "DUMMY_PASSWORD",
         "essbase_host": "34.31.58.133",
         "essbase_port": 9010,
-        "ssl_verify": false
+        "ssl_verify": false,
+        "use_ssl": false
       },
       "config_rows": [
         {
@@ -118,7 +120,8 @@
         "#password": "DUMMY_PASSWORD",
         "essbase_host": "34.31.58.133",
         "essbase_port": 9010,
-        "ssl_verify": false
+        "ssl_verify": false,
+        "use_ssl": false
       },
       "config_rows": [
         {
@@ -186,7 +189,8 @@
         "#password": "DUMMY_PASSWORD",
         "essbase_host": "34.31.58.133",
         "essbase_port": 9010,
-        "ssl_verify": false
+        "ssl_verify": false,
+        "use_ssl": false
       },
       "config_rows": [
         {
@@ -232,6 +236,7 @@
         "essbase_host": "34.31.58.133",
         "essbase_port": 9010,
         "ssl_verify": false,
+        "use_ssl": false,
         "source": {
           "input_table": "essbase_sample_basic",
           "batch_size": 1000,
@@ -268,7 +273,8 @@
         "#password": "DUMMY_PASSWORD",
         "essbase_host": "34.31.58.133",
         "essbase_port": 9010,
-        "ssl_verify": false
+        "ssl_verify": false,
+        "use_ssl": false
       },
       "config_rows": [
         {
