@@ -12,16 +12,19 @@
       "id": "write-empty",
       "is_disabled": false,
       "parameters": {
-        "module": "essbase",
-        "application": "Sample",
-        "database": "Basic",
-        "input_table": "essbase_empty",
-        "batch_size": 1000,
-        "context_members": [
-          "East",
-          "Actual",
-          "Sales"
-        ]
+        "source": {
+          "input_table": "essbase_empty",
+          "batch_size": 1000,
+          "context_members": [
+            "East",
+            "Actual",
+            "Sales"
+          ]
+        },
+        "destination": {
+          "application": "Sample",
+          "database": "Basic"
+        }
       }
     }
   ],

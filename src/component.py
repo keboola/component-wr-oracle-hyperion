@@ -45,9 +45,9 @@ class Component(ComponentBase):
         for row_params in rows_to_process:
             logging.info(
                 "Processing: app=%s db=%s table=%s",
-                row_params.application,
-                row_params.database,
-                row_params.input_table,
+                row_params.destination.application,
+                row_params.destination.database,
+                row_params.source.input_table,
             )
             if client is None:
                 client = self._build_essbase_client(self.params)
@@ -56,27 +56,35 @@ class Component(ComponentBase):
             self._write_essbase(client, row_params)
 
     def _build_essbase_client(self, params: Configuration) -> EssbaseClient:
-        logging.info("Connecting to Essbase at %s:%d", params.essbase_host, params.essbase_port)
+        host = params.get_essbase_host()
+        logging.info("Connecting to Essbase at %s:%d", host, params.essbase_port)
         return EssbaseClient(
-            host=params.essbase_host,
+            host=host,
             port=params.essbase_port,
             username=params.username,
             password=params.password,
+            use_ssl=params.use_ssl,
             ssl_verify=params.ssl_verify,
         )
 
     def _write_essbase(self, client: EssbaseClient, row: RowConfiguration) -> None:
-        headers, data_rows = self._read_table(row.input_table)
+        headers, data_rows = self._read_table(row.source.input_table)
         if not headers:
-            logging.warning("Input table '%s' is empty — skipping.", row.input_table)
+            logging.warning("Input table '%s' is empty — skipping.", row.source.input_table)
             return
 
         total = 0
-        for batch in _batched(data_rows, row.batch_size):
-            client.import_data_slice(row.application, row.database, headers, batch, row.context_members)
+        for batch in _batched(data_rows, row.source.batch_size):
+            client.import_data_slice(
+                row.destination.application, row.destination.database, headers, batch, row.source.context_members
+            )
             total += len(batch)
-            logging.info("Essbase %s/%s: imported %d rows so far.", row.application, row.database, total)
-        logging.info("Essbase write complete: %d total rows to %s/%s.", total, row.application, row.database)
+            logging.info(
+                "Essbase %s/%s: imported %d rows so far.", row.destination.application, row.destination.database, total
+            )
+        logging.info(
+            "Essbase write complete: %d total rows to %s/%s.", total, row.destination.application, row.destination.database
+        )
 
     def _read_table(self, table_name: str) -> tuple[list[str], list[list]]:
         """

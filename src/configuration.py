@@ -1,8 +1,26 @@
 import logging
-from typing import Literal
 
 from keboola.component.exceptions import UserException
 from pydantic import BaseModel, Field, ValidationError
+
+
+class SourceConfig(BaseModel):
+    """Row-level source parameters — maps to the 'source' block in configRowSchema."""
+
+    input_table: str
+    context_members: list[str] = Field(default_factory=list)
+    batch_size: int = 1000
+
+    model_config = {"extra": "ignore"}
+
+
+class DestinationConfig(BaseModel):
+    """Row-level destination parameters — maps to the 'destination' block in configRowSchema."""
+
+    application: str
+    database: str
+
+    model_config = {"extra": "ignore"}
 
 
 class Configuration(BaseModel):
@@ -12,10 +30,11 @@ class Configuration(BaseModel):
     password: str = Field(alias="#password")
     essbase_host: str
     essbase_port: int = 9010
+    use_ssl: bool = True
     ssl_verify: bool = True
     debug: bool = False
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "ignore"}
 
     def __init__(self, **data):
         try:
@@ -27,18 +46,18 @@ class Configuration(BaseModel):
         if self.debug:
             logging.getLogger().setLevel(logging.DEBUG)
 
+    def get_essbase_host(self) -> str:
+        """Return Essbase host."""
+        return self.essbase_host
+
 
 class RowConfiguration(BaseModel):
     """Row-level configuration — one row per write operation."""
 
-    module: Literal["essbase"]
-    application: str
-    database: str
-    input_table: str  # Keboola Storage table to read from (without .csv)
-    batch_size: int = 1000  # Rows per API call
-    context_members: list[str] = []  # BSO: default members for dimensions not in the CSV
+    source: SourceConfig
+    destination: DestinationConfig
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "ignore"}
 
     def __init__(self, **data):
         try:

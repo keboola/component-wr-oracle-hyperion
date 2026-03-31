@@ -16,16 +16,19 @@
           "id": "write-sample-basic",
           "is_disabled": false,
           "parameters": {
-            "module": "essbase",
-            "application": "Sample",
-            "database": "Basic",
-            "input_table": "essbase_sample_basic",
-            "batch_size": 1000,
-            "context_members": [
-              "East",
-              "Actual",
-              "Sales"
-            ]
+            "source": {
+              "input_table": "essbase_sample_basic",
+              "batch_size": 1000,
+              "context_members": [
+                "East",
+                "Actual",
+                "Sales"
+              ]
+            },
+            "destination": {
+              "application": "Sample",
+              "database": "Basic"
+            }
           }
         }
       ],
@@ -58,32 +61,38 @@
           "id": "disabled-row",
           "is_disabled": true,
           "parameters": {
-            "module": "essbase",
-            "application": "Sample",
-            "database": "Basic",
-            "input_table": "should_not_be_sent",
-            "batch_size": 1000,
-            "context_members": [
-              "East",
-              "Actual",
-              "Sales"
-            ]
+            "source": {
+              "input_table": "should_not_be_sent",
+              "batch_size": 1000,
+              "context_members": [
+                "East",
+                "Actual",
+                "Sales"
+              ]
+            },
+            "destination": {
+              "application": "Sample",
+              "database": "Basic"
+            }
           }
         },
         {
           "id": "active-row",
           "is_disabled": false,
           "parameters": {
-            "module": "essbase",
-            "application": "Sample",
-            "database": "Basic",
-            "input_table": "essbase_sample_basic",
-            "batch_size": 1000,
-            "context_members": [
-              "East",
-              "Actual",
-              "Sales"
-            ]
+            "source": {
+              "input_table": "essbase_sample_basic",
+              "batch_size": 1000,
+              "context_members": [
+                "East",
+                "Actual",
+                "Sales"
+              ]
+            },
+            "destination": {
+              "application": "Sample",
+              "database": "Basic"
+            }
           }
         }
       ],
@@ -116,32 +125,38 @@
           "id": "write-cola",
           "is_disabled": false,
           "parameters": {
-            "module": "essbase",
-            "application": "Sample",
-            "database": "Basic",
-            "input_table": "essbase_cola",
-            "batch_size": 1000,
-            "context_members": [
-              "East",
-              "Actual",
-              "Sales"
-            ]
+            "source": {
+              "input_table": "essbase_cola",
+              "batch_size": 1000,
+              "context_members": [
+                "East",
+                "Actual",
+                "Sales"
+              ]
+            },
+            "destination": {
+              "application": "Sample",
+              "database": "Basic"
+            }
           }
         },
         {
           "id": "write-root-beer",
           "is_disabled": false,
           "parameters": {
-            "module": "essbase",
-            "application": "Sample",
-            "database": "Basic",
-            "input_table": "essbase_root_beer",
-            "batch_size": 1000,
-            "context_members": [
-              "East",
-              "Actual",
-              "Sales"
-            ]
+            "source": {
+              "input_table": "essbase_root_beer",
+              "batch_size": 1000,
+              "context_members": [
+                "East",
+                "Actual",
+                "Sales"
+              ]
+            },
+            "destination": {
+              "application": "Sample",
+              "database": "Basic"
+            }
           }
         }
       ],
@@ -178,16 +193,19 @@
           "id": "write-batched",
           "is_disabled": false,
           "parameters": {
-            "module": "essbase",
-            "application": "Sample",
-            "database": "Basic",
-            "input_table": "essbase_three_rows",
-            "batch_size": 1,
-            "context_members": [
-              "East",
-              "Actual",
-              "Sales"
-            ]
+            "source": {
+              "input_table": "essbase_three_rows",
+              "batch_size": 1,
+              "context_members": [
+                "East",
+                "Actual",
+                "Sales"
+              ]
+            },
+            "destination": {
+              "application": "Sample",
+              "database": "Basic"
+            }
           }
         }
       ],
@@ -214,16 +232,19 @@
         "essbase_host": "34.31.58.133",
         "essbase_port": 9010,
         "ssl_verify": false,
-        "module": "essbase",
-        "application": "Sample",
-        "database": "Basic",
-        "input_table": "essbase_sample_basic",
-        "batch_size": 1000,
-        "context_members": [
-          "East",
-          "Actual",
-          "Sales"
-        ]
+        "source": {
+          "input_table": "essbase_sample_basic",
+          "batch_size": 1000,
+          "context_members": [
+            "East",
+            "Actual",
+            "Sales"
+          ]
+        },
+        "destination": {
+          "application": "Sample",
+          "database": "Basic"
+        }
       },
       "storage": {
         "input": {
@@ -254,16 +275,19 @@
           "id": "write-empty",
           "is_disabled": false,
           "parameters": {
-            "module": "essbase",
-            "application": "Sample",
-            "database": "Basic",
-            "input_table": "essbase_empty",
-            "batch_size": 1000,
-            "context_members": [
-              "East",
-              "Actual",
-              "Sales"
-            ]
+            "source": {
+              "input_table": "essbase_empty",
+              "batch_size": 1000,
+              "context_members": [
+                "East",
+                "Actual",
+                "Sales"
+              ]
+            },
+            "destination": {
+              "application": "Sample",
+              "database": "Basic"
+            }
           }
         }
       ],

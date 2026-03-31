@@ -12,16 +12,19 @@
       "id": "write-sample-basic",
       "is_disabled": false,
       "parameters": {
-        "module": "essbase",
-        "application": "Sample",
-        "database": "Basic",
-        "input_table": "essbase_sample_basic",
-        "batch_size": 1000,
-        "context_members": [
-          "East",
-          "Actual",
-          "Sales"
-        ]
+        "source": {
+          "input_table": "essbase_sample_basic",
+          "batch_size": 1000,
+          "context_members": [
+            "East",
+            "Actual",
+            "Sales"
+          ]
+        },
+        "destination": {
+          "application": "Sample",
+          "database": "Basic"
+        }
       }
     }
   ],

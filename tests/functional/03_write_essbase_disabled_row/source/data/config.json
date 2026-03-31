@@ -12,32 +12,38 @@
       "id": "disabled-row",
       "is_disabled": true,
       "parameters": {
-        "module": "essbase",
-        "application": "Sample",
-        "database": "Basic",
-        "input_table": "should_not_be_sent",
-        "batch_size": 1000,
-        "context_members": [
-          "East",
-          "Actual",
-          "Sales"
-        ]
+        "source": {
+          "input_table": "should_not_be_sent",
+          "batch_size": 1000,
+          "context_members": [
+            "East",
+            "Actual",
+            "Sales"
+          ]
+        },
+        "destination": {
+          "application": "Sample",
+          "database": "Basic"
+        }
       }
     },
     {
       "id": "active-row",
       "is_disabled": false,
       "parameters": {
-        "module": "essbase",
-        "application": "Sample",
-        "database": "Basic",
-        "input_table": "essbase_sample_basic",
-        "batch_size": 1000,
-        "context_members": [
-          "East",
-          "Actual",
-          "Sales"
-        ]
+        "source": {
+          "input_table": "essbase_sample_basic",
+          "batch_size": 1000,
+          "context_members": [
+            "East",
+            "Actual",
+            "Sales"
+          ]
+        },
+        "destination": {
+          "application": "Sample",
+          "database": "Basic"
+        }
       }
     }
   ],

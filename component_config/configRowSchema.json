@@ -1,40 +1,67 @@
 {
   "type": "object",
   "title": "Write Configuration",
-  "required": ["application", "database", "input_table"],
+  "required": ["source", "destination"],
   "properties": {
-    "application": {
-      "type": "string",
-      "title": "Application",
-      "description": "Essbase application name",
-      "propertyOrder": 1
+    "source": {
+      "type": "object",
+      "title": "Source",
+      "format": "collapse",
+      "propertyOrder": 1,
+      "properties": {
+        "input_table": {
+          "type": "string",
+          "title": "Input Table",
+          "description": "Destination name of the input table as configured in Storage input mapping (without .csv extension). The first CSV column is treated as the row dimension member; remaining columns are dense dimension members (e.g. time periods).",
+          "required": true,
+          "propertyOrder": 1
+        },
+        "context_members": {
+          "type": "array",
+          "title": "Context Members",
+          "description": "Default members for BSO dimensions not represented as columns in the input table (e.g. [\"East\", \"Actual\", \"Sales\"]). Order must match the Essbase outline.",
+          "format": "select",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "default": [],
+          "options": {
+            "tags": true
+          },
+          "propertyOrder": 2
+        },
+        "batch_size": {
+          "type": "integer",
+          "title": "Batch Size",
+          "description": "Number of rows to send per API call.",
+          "default": 1000,
+          "minimum": 1,
+          "propertyOrder": 3
+        }
+      }
     },
-    "database": {
-      "type": "string",
-      "title": "Database / Cube",
-      "description": "Essbase database (cube) name",
-      "propertyOrder": 2
-    },
-    "input_table": {
-      "type": "string",
-      "title": "Input Table Name",
-      "description": "Name of the Keboola Storage input table (without .csv extension). The first CSV column is the row member; remaining columns are dense dimension members (e.g. time periods).",
-      "propertyOrder": 3
-    },
-    "context_members": {
-      "type": "array",
-      "title": "Context Members",
-      "description": "Default members for BSO dimensions not represented as columns in the input table (e.g. [\"East\", \"Actual\", \"Sales\"]). Order matches the Essbase outline.",
-      "items": {"type": "string"},
-      "default": [],
-      "propertyOrder": 4
-    },
-    "batch_size": {
-      "type": "integer",
-      "title": "Batch Size",
-      "description": "Number of rows to send per API call (default: 1000).",
-      "default": 1000,
-      "propertyOrder": 5
+    "destination": {
+      "type": "object",
+      "title": "Destination",
+      "format": "collapse",
+      "propertyOrder": 2,
+      "properties": {
+        "application": {
+          "type": "string",
+          "title": "Application",
+          "description": "Essbase application name",
+          "required": true,
+          "propertyOrder": 1
+        },
+        "database": {
+          "type": "string",
+          "title": "Database / Cube",
+          "description": "Essbase database (cube) name",
+          "required": true,
+          "propertyOrder": 2
+        }
+      }
     }
   }
 }

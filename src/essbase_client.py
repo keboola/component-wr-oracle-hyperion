@@ -1,15 +1,24 @@
+import json
 import logging
+import time
 from typing import Any
 
 import requests
 from keboola.component.exceptions import UserException
 
+# Essbase error codes that indicate a transient server-side timeout worth retrying
+_RETRYABLE_ESSBASE_CODES = {1042017}
+_RETRY_ATTEMPTS = 3
+_RETRY_BACKOFF_BASE = 5  # seconds; delay = base * 2^attempt
+
 
 class EssbaseClient:
     """Client for Essbase 21C REST API (port 9010, Basic Auth)."""
 
-    def __init__(self, host: str, port: int, username: str, password: str, ssl_verify: bool = True):
-        scheme = "https" if ssl_verify else "http"
+    def __init__(
+        self, host: str, port: int, username: str, password: str, use_ssl: bool = True, ssl_verify: bool = True
+    ):
+        scheme = "https" if use_ssl else "http"
         self.base_url = f"{scheme}://{host}:{port}/essbase/rest/v1"
         self.ssl_verify = ssl_verify
         self.session = requests.Session()
@@ -103,11 +112,37 @@ class EssbaseClient:
 
     def _get(self, path: str) -> Any:
         url = f"{self.base_url}{path}"
+        last_exc: Exception | None = None
+        for attempt in range(_RETRY_ATTEMPTS):
+            try:
+                resp = self.session.get(url, verify=self.ssl_verify, timeout=300)
+                resp.raise_for_status()
+                return resp.json()
+            except requests.HTTPError as e:
+                if self._is_retryable(e) and attempt < _RETRY_ATTEMPTS - 1:
+                    delay = _RETRY_BACKOFF_BASE * (2**attempt)
+                    logging.warning(
+                        "Essbase timeout on GET %s (attempt %d/%d), retrying in %ds…",
+                        path,
+                        attempt + 1,
+                        _RETRY_ATTEMPTS,
+                        delay,
+                    )
+                    time.sleep(delay)
+                    last_exc = e
+                    continue
+                raise UserException(
+                    f"Essbase API error [{e.response.status_code}] on GET {path}: {e.response.text}"
+                ) from e
+            except requests.ConnectionError as e:
+                raise UserException(f"Cannot connect to Essbase at {self.base_url}: {e}") from e
+        raise UserException(f"Essbase GET {path} failed after {_RETRY_ATTEMPTS} attempts") from last_exc
+
+    @staticmethod
+    def _is_retryable(e: requests.HTTPError) -> bool:
+        """Return True if the Essbase error code indicates a transient timeout."""
         try:
-            resp = self.session.get(url, verify=self.ssl_verify, timeout=300)
-            resp.raise_for_status()
-            return resp.json()
-        except requests.HTTPError as e:
-            raise UserException(f"Essbase API error [{e.response.status_code}] on GET {path}: {e.response.text}") from e
-        except requests.ConnectionError as e:
-            raise UserException(f"Cannot connect to Essbase at {self.base_url}: {e}") from e
+            body = json.loads(e.response.text)
+            return body.get("errorCode") in _RETRYABLE_ESSBASE_CODES
+        except (ValueError, AttributeError):
+            return False

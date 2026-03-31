@@ -12,32 +12,38 @@
       "id": "write-cola",
       "is_disabled": false,
       "parameters": {
-        "module": "essbase",
-        "application": "Sample",
-        "database": "Basic",
-        "input_table": "essbase_cola",
-        "batch_size": 1000,
-        "context_members": [
-          "East",
-          "Actual",
-          "Sales"
-        ]
+        "source": {
+          "input_table": "essbase_cola",
+          "batch_size": 1000,
+          "context_members": [
+            "East",
+            "Actual",
+            "Sales"
+          ]
+        },
+        "destination": {
+          "application": "Sample",
+          "database": "Basic"
+        }
       }
     },
     {
       "id": "write-root-beer",
       "is_disabled": false,
       "parameters": {
-        "module": "essbase",
-        "application": "Sample",
-        "database": "Basic",
-        "input_table": "essbase_root_beer",
-        "batch_size": 1000,
-        "context_members": [
-          "East",
-          "Actual",
-          "Sales"
-        ]
+        "source": {
+          "input_table": "essbase_root_beer",
+          "batch_size": 1000,
+          "context_members": [
+            "East",
+            "Actual",
+            "Sales"
+          ]
+        },
+        "destination": {
+          "application": "Sample",
+          "database": "Basic"
+        }
       }
     }
   ],

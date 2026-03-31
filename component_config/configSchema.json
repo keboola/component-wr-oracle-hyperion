@@ -27,17 +27,28 @@
       "format": "password",
       "propertyOrder": 4
     },
+    "use_ssl": {
+      "type": "boolean",
+      "title": "Use SSL",
+      "description": "Connect to Essbase over HTTPS (recommended). Disable only for plain HTTP environments.",
+      "format": "checkbox",
+      "default": true,
+      "propertyOrder": 5
+    },
     "ssl_verify": {
       "type": "boolean",
       "title": "Verify SSL Certificate",
+      "description": "Validate the server's SSL certificate. Disable only when using self-signed certificates.",
+      "format": "checkbox",
       "default": true,
-      "propertyOrder": 5
+      "propertyOrder": 6
     },
     "debug": {
       "type": "boolean",
       "title": "Debug Mode",
+      "format": "checkbox",
       "default": false,
-      "propertyOrder": 6
+      "propertyOrder": 7
     }
   }
 }
