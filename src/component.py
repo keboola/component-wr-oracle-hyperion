@@ -11,8 +11,9 @@ from itertools import islice
 
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.exceptions import UserException
+from keboola.component.sync_actions import SelectElement
 
-from configuration import Configuration, RowConfiguration
+from configuration import ColumnMapping, Configuration, RowConfiguration
 from essbase_client import EssbaseClient
 
 
@@ -55,6 +56,24 @@ class Component(ComponentBase):
                 logging.info("Connected to Essbase version: %s", version)
             self._write_essbase(client, row_params)
 
+    @sync_action("listApplications")
+    def list_applications(self) -> list[SelectElement]:
+        """Return all Essbase applications for the destination dropdown."""
+        client = self._build_essbase_client(self.params)
+        apps = client.get_applications()
+        return [SelectElement(value=app["name"], label=app.get("alias") or app["name"]) for app in apps]
+
+    @sync_action("listDatabases")
+    def list_databases(self) -> list[SelectElement]:
+        """Return databases for the selected application."""
+        destination = self.configuration.parameters.get("destination", {})
+        application = destination.get("application", "")
+        if not application:
+            raise UserException("Select or enter an Application name first, then reload databases.")
+        client = self._build_essbase_client(self.params)
+        databases = client.get_databases(application)
+        return [SelectElement(value=db["name"], label=db.get("alias") or db["name"]) for db in databases]
+
     @sync_action("testConnection")
     def test_connection(self) -> dict:
         """Sync action: verify Essbase connectivity and return version."""
@@ -80,6 +99,10 @@ class Component(ComponentBase):
             logging.warning("Input table '%s' is empty — skipping.", row.source.input_table)
             return
 
+        if row.source.column_mapping:
+            headers, data_rows = self._apply_column_mapping(headers, data_rows, row.source.column_mapping)
+            logging.info("Applied column mapping: %d column(s) -> %s", len(headers), headers)
+
         total = 0
         for batch in _batched(data_rows, row.source.batch_size):
             client.import_data_slice(
@@ -92,6 +115,20 @@ class Component(ComponentBase):
         logging.info(
             "Essbase write complete: %d total rows to %s/%s.", total, row.destination.application, row.destination.database
         )
+
+    @staticmethod
+    def _apply_column_mapping(
+        headers: list[str], rows: list[list], mapping: list[ColumnMapping]
+    ) -> tuple[list[str], list[list]]:
+        """Filter and rename columns according to mapping; drops unmapped columns."""
+        col_map = {cm.source: cm.destination for cm in mapping}
+        mapped = [(i, col_map[h]) for i, h in enumerate(headers) if h in col_map]
+        if not mapped:
+            return headers, rows
+        new_headers = [dest for _, dest in mapped]
+        indices = [i for i, _ in mapped]
+        new_rows = [[row[i] for i in indices] for row in rows]
+        return new_headers, new_rows
 
     def _read_table(self, table_name: str) -> tuple[list[str], list[list]]:
         """

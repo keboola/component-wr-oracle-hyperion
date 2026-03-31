@@ -31,13 +31,42 @@
           },
           "propertyOrder": 2
         },
+        "column_mapping": {
+          "title": "Column Mapping",
+          "description": "Maps input table columns to Essbase member/dimension names. Only mapped columns are written. Leave empty to pass all columns through unchanged.",
+          "type": "array",
+          "format": "table",
+          "propertyOrder": 3,
+          "default": [],
+          "items": {
+            "type": "object",
+            "required": ["source", "destination"],
+            "title": "Column",
+            "properties": {
+              "source": {
+                "type": "string",
+                "title": "Source Column",
+                "enumSource": "columns",
+                "propertyOrder": 1,
+                "options": {
+                  "creatable": true
+                }
+              },
+              "destination": {
+                "type": "string",
+                "title": "Essbase Member / Dimension Name",
+                "propertyOrder": 2
+              }
+            }
+          }
+        },
         "batch_size": {
           "type": "integer",
           "title": "Batch Size",
           "description": "Number of rows to send per API call.",
           "default": 1000,
           "minimum": 1,
-          "propertyOrder": 3
+          "propertyOrder": 4
         }
       }
     },
@@ -51,15 +80,33 @@
           "type": "string",
           "title": "Application",
           "description": "Essbase application name",
+          "format": "select",
           "required": true,
-          "propertyOrder": 1
+          "propertyOrder": 1,
+          "options": {
+            "async": {
+              "label": "Load Applications",
+              "action": "listApplications",
+              "autoload": true
+            }
+          }
         },
         "database": {
           "type": "string",
           "title": "Database / Cube",
           "description": "Essbase database (cube) name",
+          "format": "select",
           "required": true,
-          "propertyOrder": 2
+          "propertyOrder": 2,
+          "options": {
+            "async": {
+              "label": "Load Databases",
+              "action": "listDatabases"
+            },
+            "dependencies": {
+              "destination.application": true
+            }
+          }
         }
       }
     }
