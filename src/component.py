@@ -9,7 +9,7 @@ import csv
 import logging
 from itertools import islice
 
-from keboola.component.base import ComponentBase
+from keboola.component.base import ComponentBase, sync_action
 from keboola.component.exceptions import UserException
 
 from configuration import Configuration, RowConfiguration
@@ -54,6 +54,13 @@ class Component(ComponentBase):
                 version = client.verify_connection()
                 logging.info("Connected to Essbase version: %s", version)
             self._write_essbase(client, row_params)
+
+    @sync_action("testConnection")
+    def test_connection(self) -> dict:
+        """Sync action: verify Essbase connectivity and return version."""
+        client = self._build_essbase_client(self.params)
+        version = client.verify_connection()
+        return {"status": "success", "message": f"Connected to Essbase {version}"}
 
     def _build_essbase_client(self, params: Configuration) -> EssbaseClient:
         host = params.get_essbase_host()

@@ -49,6 +49,17 @@
       "format": "checkbox",
       "default": false,
       "propertyOrder": 7
+    },
+    "test_connection": {
+      "type": "button",
+      "format": "test-connection",
+      "propertyOrder": 8,
+      "options": {
+        "async": {
+          "label": "Test Connection",
+          "action": "testConnection"
+        }
+      }
     }
   }
 }
