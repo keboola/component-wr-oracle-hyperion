@@ -39,6 +39,7 @@
           "title": "Application",
           "description": "Essbase application name",
           "format": "select",
+          "enum": [],
           "required": true,
           "propertyOrder": 1,
           "options": {
@@ -54,6 +55,7 @@
           "title": "Database / Cube",
           "description": "Essbase database (cube) name",
           "format": "select",
+          "enum": [],
           "required": true,
           "propertyOrder": 2,
           "options": {
@@ -89,14 +91,13 @@
               "source": {
                 "type": "string",
                 "title": "Source Column",
-                "format": "select",
+                "watch": {
+                  "columns": "_metadata_.table.columns"
+                },
+                "enumSource": "columns",
                 "propertyOrder": 1,
                 "options": {
-                  "creatable": true,
-                  "async": {
-                    "label": "Load Columns",
-                    "action": "listColumns"
-                  }
+                  "creatable": true
                 }
               },
               "destination": {
