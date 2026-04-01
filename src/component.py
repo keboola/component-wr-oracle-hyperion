@@ -45,10 +45,9 @@ class Component(ComponentBase):
 
         for row_params in rows_to_process:
             logging.info(
-                "Processing: app=%s db=%s table=%s",
+                "Processing: app=%s db=%s",
                 row_params.destination.application,
                 row_params.destination.database,
-                row_params.source.input_table,
             )
             if client is None:
                 client = self._build_essbase_client(self.params)
@@ -74,6 +73,15 @@ class Component(ComponentBase):
         databases = client.get_databases(application)
         return [SelectElement(value=db["name"], label=db.get("alias") or db["name"]) for db in databases]
 
+    @sync_action("listColumns")
+    def list_columns(self) -> list[SelectElement]:
+        """Return columns from the input mapping table via _metadata_."""
+        metadata = self.configuration.parameters.get("_metadata_", {})
+        columns = metadata.get("table", {}).get("columns", [])
+        if not columns:
+            raise UserException("No columns found. Link an input table in the input mapping first.")
+        return [SelectElement(value=col, label=col) for col in columns]
+
     @sync_action("testConnection")
     def test_connection(self) -> dict:
         """Sync action: verify Essbase connectivity and return version."""
@@ -94,7 +102,7 @@ class Component(ComponentBase):
         )
 
     def _write_essbase(self, client: EssbaseClient, row: RowConfiguration) -> None:
-        headers, data_rows = self._read_table(row.source.input_table)
+        headers, data_rows = self._read_table()
         if not headers:
             logging.warning("Input table '%s' is empty — skipping.", row.source.input_table)
             return
@@ -106,7 +114,7 @@ class Component(ComponentBase):
         total = 0
         for batch in _batched(data_rows, row.source.batch_size):
             client.import_data_slice(
-                row.destination.application, row.destination.database, headers, batch, row.source.context_members
+                row.destination.application, row.destination.database, headers, batch
             )
             total += len(batch)
             logging.info(
@@ -130,16 +138,14 @@ class Component(ComponentBase):
         new_rows = [[row[i] for i in indices] for row in rows]
         return new_headers, new_rows
 
-    def _read_table(self, table_name: str) -> tuple[list[str], list[list]]:
+    def _read_table(self) -> tuple[list[str], list[list]]:
         """
-        Read an input table from Keboola Storage and return (headers, rows_as_lists).
+        Read the single input table from Keboola Storage and return (headers, rows_as_lists).
         """
-        target_name = f"{table_name}.csv"
         all_tables = self.get_input_tables_definitions()
-        matching = [t for t in all_tables if t.name == target_name]
-        if not matching:
-            raise UserException(f"Input table '{target_name}' not found. Available: {[t.name for t in all_tables]}")
-        table = matching[0]
+        if not all_tables:
+            raise UserException("No input table found in the input mapping.")
+        table = all_tables[0]
         headers = []
         rows = []
         with open(table.full_path, newline="", encoding="utf-8") as f:

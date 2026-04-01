@@ -17,8 +17,6 @@ class ColumnMapping(BaseModel):
 class SourceConfig(BaseModel):
     """Row-level source parameters — maps to the 'source' block in configRowSchema."""
 
-    input_table: str
-    context_members: list[str] = Field(default_factory=list)
     batch_size: int = 1000
     column_mapping: list[ColumnMapping] = Field(default_factory=list)
 

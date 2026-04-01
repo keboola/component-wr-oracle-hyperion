@@ -28,81 +28,11 @@
         }
       }
     },
-    "source": {
-      "type": "object",
-      "title": "Source",
-      "format": "collapse",
-      "propertyOrder": 1,
-      "properties": {
-        "input_table": {
-          "type": "string",
-          "title": "Input Table",
-          "description": "Destination name of the input table as configured in Storage input mapping (without .csv extension). The first CSV column is treated as the row dimension member; remaining columns are dense dimension members (e.g. time periods).",
-          "required": true,
-          "propertyOrder": 1
-        },
-        "context_members": {
-          "type": "array",
-          "title": "Context Members",
-          "description": "Default members for BSO dimensions not represented as columns in the input table (e.g. [\"East\", \"Actual\", \"Sales\"]). Order must match the Essbase outline.",
-          "format": "select",
-          "items": {
-            "type": "string"
-          },
-          "uniqueItems": true,
-          "default": [],
-          "options": {
-            "tags": true
-          },
-          "propertyOrder": 2
-        },
-        "column_mapping": {
-          "title": "Column Mapping",
-          "description": "Maps input table columns to Essbase member/dimension names. Only mapped columns are written. Leave empty to pass all columns through unchanged.",
-          "type": "array",
-          "format": "table",
-          "propertyOrder": 3,
-          "default": [],
-          "items": {
-            "type": "object",
-            "required": ["source", "destination"],
-            "title": "Column",
-            "properties": {
-              "source": {
-                "type": "string",
-                "title": "Source Column",
-                "watch": {
-                  "columns": "_metadata_.table.columns"
-                },
-                "enumSource": "columns",
-                "propertyOrder": 1,
-                "options": {
-                  "creatable": true
-                }
-              },
-              "destination": {
-                "type": "string",
-                "title": "Essbase Member / Dimension Name",
-                "propertyOrder": 2
-              }
-            }
-          }
-        },
-        "batch_size": {
-          "type": "integer",
-          "title": "Batch Size",
-          "description": "Number of rows to send per API call.",
-          "default": 1000,
-          "minimum": 1,
-          "propertyOrder": 4
-        }
-      }
-    },
     "destination": {
       "type": "object",
       "title": "Destination",
       "format": "collapse",
-      "propertyOrder": 2,
+      "propertyOrder": 1,
       "properties": {
         "application": {
           "type": "string",
@@ -135,6 +65,55 @@
               "destination.application": true
             }
           }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "title": "Source",
+      "format": "collapse",
+      "propertyOrder": 2,
+      "properties": {
+        "column_mapping": {
+          "title": "Column Mapping",
+          "description": "Maps input table columns to Essbase member/dimension names. Only mapped columns are written. Leave empty to pass all columns through unchanged.",
+          "type": "array",
+          "format": "table",
+          "propertyOrder": 1,
+          "default": [],
+          "items": {
+            "type": "object",
+            "required": ["source", "destination"],
+            "title": "Column",
+            "properties": {
+              "source": {
+                "type": "string",
+                "title": "Source Column",
+                "format": "select",
+                "propertyOrder": 1,
+                "options": {
+                  "creatable": true,
+                  "async": {
+                    "label": "Load Columns",
+                    "action": "listColumns"
+                  }
+                }
+              },
+              "destination": {
+                "type": "string",
+                "title": "Essbase Member / Dimension Name",
+                "propertyOrder": 2
+              }
+            }
+          }
+        },
+        "batch_size": {
+          "type": "integer",
+          "title": "Batch Size",
+          "description": "Number of rows to send per API call.",
+          "default": 1000,
+          "minimum": 1,
+          "propertyOrder": 2
         }
       }
     }
