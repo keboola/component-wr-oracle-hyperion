@@ -89,7 +89,9 @@ class EssbaseClient:
     def _push_data(self, path: str, data: str) -> None:
         url = f"{self.base_url}{path}"
         try:
-            resp = self.session.post(url, data=data.encode(), headers={"Content-Type": "text/plain"}, verify=self.ssl_verify, timeout=300)
+            resp = self.session.post(
+                url, data=data.encode(), headers={"Content-Type": "text/plain"}, verify=self.ssl_verify, timeout=300
+            )
             resp.raise_for_status()
         except requests.HTTPError as e:
             raise UserException(f"Essbase dataload: push failed [{e.response.status_code}]: {e.response.text}") from e
@@ -98,17 +100,34 @@ class EssbaseClient:
 
     def _end_stream(self, path: str, expect_success: bool = True) -> dict:
         url = f"{self.base_url}{path}"
-        try:
-            resp = self.session.delete(url, verify=self.ssl_verify, timeout=60)
-            resp.raise_for_status()
-            result = resp.json() if resp.content else {}
-            if expect_success and result.get("errorMessage"):
-                raise UserException(f"Essbase dataload failed: {result['errorMessage']}")
-            return result
-        except requests.HTTPError as e:
-            raise UserException(f"Essbase dataload: finalize failed [{e.response.status_code}]: {e.response.text}") from e
-        except requests.ConnectionError as e:
-            raise UserException(f"Essbase dataload: finalize connection error: {e}") from e
+        last_exc: Exception | None = None
+        for attempt in range(_RETRY_ATTEMPTS):
+            try:
+                resp = self.session.delete(url, verify=self.ssl_verify, timeout=60)
+                resp.raise_for_status()
+                result = resp.json() if resp.content else {}
+                if expect_success and result.get("errorMessage"):
+                    raise UserException(f"Essbase dataload failed: {result['errorMessage']}")
+                return result
+            except requests.HTTPError as e:
+                if self._is_retryable(e) and attempt < _RETRY_ATTEMPTS - 1:
+                    delay = _RETRY_BACKOFF_BASE * (2**attempt)
+                    logging.warning(
+                        "Essbase timeout on finalize %s (attempt %d/%d), retrying in %ds…",
+                        path,
+                        attempt + 1,
+                        _RETRY_ATTEMPTS,
+                        delay,
+                    )
+                    time.sleep(delay)
+                    last_exc = e
+                    continue
+                raise UserException(
+                    f"Essbase dataload: finalize failed [{e.response.status_code}]: {e.response.text}"
+                ) from e
+            except requests.ConnectionError as e:
+                raise UserException(f"Essbase dataload: finalize connection error: {e}") from e
+        raise UserException(f"Essbase finalize {path} failed after {_RETRY_ATTEMPTS} attempts") from last_exc
 
     def _get(self, path: str) -> Any:
         url = f"{self.base_url}{path}"
