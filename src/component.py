@@ -7,6 +7,7 @@ Essbase (21C REST API) via the dataload streaming endpoint.
 
 import csv
 import logging
+from collections.abc import Iterator
 from itertools import islice
 from pathlib import Path
 
@@ -104,7 +105,7 @@ class Component(ComponentBase):
 
     def _write_essbase(self, client: EssbaseClient, row: RowConfiguration) -> None:
         headers, data_rows = self._read_table(row.source.input_table)
-        if not headers or not data_rows:
+        if not headers:
             logging.warning("Input table '%s' is empty — skipping.", row.source.input_table)
             return
 
@@ -125,14 +126,20 @@ class Component(ComponentBase):
             logging.info(
                 "Essbase %s/%s: imported %d rows so far.", row.destination.application, row.destination.database, total
             )
-        logging.info(
-            "Essbase write complete: %d total rows to %s/%s.", total, row.destination.application, row.destination.database
-        )
+        if total == 0:
+            logging.warning("Input table '%s' had no data rows — nothing written.", row.source.input_table)
+        else:
+            logging.info(
+                "Essbase write complete: %d total rows to %s/%s.",
+                total,
+                row.destination.application,
+                row.destination.database,
+            )
 
     @staticmethod
     def _apply_column_mapping(
-        headers: list[str], rows: list[list], mapping: list[ColumnMapping]
-    ) -> tuple[list[str], list[list]]:
+        headers: list[str], rows: Iterator[list], mapping: list[ColumnMapping]
+    ) -> tuple[list[str], Iterator[list]]:
         """Filter and rename columns according to mapping; drops unmapped columns."""
         col_map = {cm.source: cm.destination for cm in mapping}
         mapped = [(i, col_map[h]) for i, h in enumerate(headers) if h in col_map]
@@ -140,12 +147,12 @@ class Component(ComponentBase):
             return headers, rows
         new_headers = [dest for _, dest in mapped]
         indices = [i for i, _ in mapped]
-        new_rows = [[row[i] for i in indices] for row in rows]
-        return new_headers, new_rows
+        return new_headers, ([row[i] for i in indices] for row in rows)
 
-    def _read_table(self, input_table: str = "") -> tuple[list[str], list[list]]:
+    def _read_table(self, input_table: str = "") -> tuple[list[str], Iterator[list]]:
         """
-        Read an input table from Keboola Storage and return (headers, rows_as_lists).
+        Read an input table from Keboola Storage and return (headers, row_iterator).
+        Rows are streamed lazily to avoid loading the entire table into memory.
         If input_table is set, selects the table whose filename stem matches; otherwise uses the first.
         """
         all_tables = self.get_input_tables_definitions()
@@ -157,16 +164,17 @@ class Component(ComponentBase):
                 raise UserException(f"Input table '{input_table}' not found in the input mapping.")
         else:
             table = all_tables[0]
-        headers = []
-        rows = []
+
         with open(table.full_path, newline="", encoding="utf-8") as f:
-            reader = csv.reader(f)
-            for i, row in enumerate(reader):
-                if i == 0:
-                    headers = row
-                else:
-                    rows.append(row)
-        return headers, rows
+            headers = next(csv.reader(f), [])
+
+        def _row_iter(path: str) -> Iterator[list]:
+            with open(path, newline="", encoding="utf-8") as f:
+                reader = csv.reader(f)
+                next(reader, None)  # skip header
+                yield from reader
+
+        return headers, _row_iter(table.full_path)
 
 
 if __name__ == "__main__":

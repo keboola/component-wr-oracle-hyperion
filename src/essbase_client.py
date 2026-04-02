@@ -74,7 +74,7 @@ class EssbaseClient:
         lines = [self._quote(m) for m in context_members]
         lines.append(" ".join(self._quote(h) for h in headers[1:]))
         for row in rows:
-            lines.append(self._quote(str(row[0])) + " " + " ".join(str(v) for v in row[1:]))
+            lines.append(self._quote(str(row[0])) + " " + " ".join(self._quote(str(v)) for v in row[1:]))
         return "\n".join(lines) + "\n"
 
     def _start_stream(self, path: str) -> str:
@@ -102,8 +102,8 @@ class EssbaseClient:
             resp = self.session.delete(url, verify=self.ssl_verify, timeout=60)
             resp.raise_for_status()
             result = resp.json() if resp.content else {}
-            if expect_success and result.get("status", "").lower() != "data load completed successfully":
-                raise UserException(f"Essbase dataload failed: {result.get('errorMessage', result)}")
+            if expect_success and result.get("errorMessage"):
+                raise UserException(f"Essbase dataload failed: {result['errorMessage']}")
             return result
         except requests.HTTPError as e:
             raise UserException(f"Essbase dataload: finalize failed [{e.response.status_code}]: {e.response.text}") from e
