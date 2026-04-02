@@ -8,6 +8,7 @@ Essbase (21C REST API) via the dataload streaming endpoint.
 import csv
 import logging
 from itertools import islice
+from pathlib import Path
 
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.exceptions import UserException
@@ -102,8 +103,8 @@ class Component(ComponentBase):
         )
 
     def _write_essbase(self, client: EssbaseClient, row: RowConfiguration) -> None:
-        headers, data_rows = self._read_table()
-        if not headers:
+        headers, data_rows = self._read_table(row.source.input_table)
+        if not headers or not data_rows:
             logging.warning("Input table '%s' is empty — skipping.", row.source.input_table)
             return
 
@@ -114,7 +115,11 @@ class Component(ComponentBase):
         total = 0
         for batch in _batched(data_rows, row.source.batch_size):
             client.import_data_slice(
-                row.destination.application, row.destination.database, headers, batch
+                row.destination.application,
+                row.destination.database,
+                headers,
+                batch,
+                context_members=row.source.context_members,
             )
             total += len(batch)
             logging.info(
@@ -138,14 +143,20 @@ class Component(ComponentBase):
         new_rows = [[row[i] for i in indices] for row in rows]
         return new_headers, new_rows
 
-    def _read_table(self) -> tuple[list[str], list[list]]:
+    def _read_table(self, input_table: str = "") -> tuple[list[str], list[list]]:
         """
-        Read the single input table from Keboola Storage and return (headers, rows_as_lists).
+        Read an input table from Keboola Storage and return (headers, rows_as_lists).
+        If input_table is set, selects the table whose filename stem matches; otherwise uses the first.
         """
         all_tables = self.get_input_tables_definitions()
         if not all_tables:
             raise UserException("No input table found in the input mapping.")
-        table = all_tables[0]
+        if input_table:
+            table = next((t for t in all_tables if Path(t.full_path).stem == input_table), None)
+            if table is None:
+                raise UserException(f"Input table '{input_table}' not found in the input mapping.")
+        else:
+            table = all_tables[0]
         headers = []
         rows = []
         with open(table.full_path, newline="", encoding="utf-8") as f:

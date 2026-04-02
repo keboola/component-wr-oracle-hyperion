@@ -1,49 +1,61 @@
 import logging
+from urllib.parse import urlparse
 
 from keboola.component.exceptions import UserException
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 
 class ColumnMapping(BaseModel):
     """Maps a single source column to an Essbase member/dimension name."""
 
+    model_config = ConfigDict(extra="ignore")
+
     source: str
     destination: str
     required: bool | None = Field(default=None)
-
-    model_config = {"extra": "ignore"}
 
 
 class SourceConfig(BaseModel):
     """Row-level source parameters — maps to the 'source' block in configRowSchema."""
 
-    batch_size: int = 1000
-    column_mapping: list[ColumnMapping] = Field(default_factory=list)
+    model_config = ConfigDict(extra="ignore")
 
-    model_config = {"extra": "ignore"}
+    input_table: str = ""
+    batch_size: int = Field(default=1000, ge=1)
+    context_members: list[str] = Field(default_factory=list)
+    column_mapping: list[ColumnMapping] = Field(default_factory=list)
 
 
 class DestinationConfig(BaseModel):
     """Row-level destination parameters — maps to the 'destination' block in configRowSchema."""
 
+    model_config = ConfigDict(extra="ignore")
+
     application: str
     database: str
-
-    model_config = {"extra": "ignore"}
 
 
 class Configuration(BaseModel):
     """Root-level component configuration — authentication and server settings."""
 
+    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+
+    hyperion_url: str = ""
+    essbase_host: str = ""
+    essbase_port: int = 9010
     username: str
     password: str = Field(alias="#password")
-    essbase_host: str
-    essbase_port: int = 9010
     use_ssl: bool = True
     ssl_verify: bool = True
     debug: bool = False
 
-    model_config = {"populate_by_name": True, "extra": "ignore"}
+    @model_validator(mode="before")
+    @classmethod
+    def _flatten_connection(cls, data: dict) -> dict:
+        """Unwrap the nested 'connection' block if present (UI format)."""
+        if isinstance(data, dict) and "connection" in data:
+            data = {**data, **data.pop("connection")}
+        return data
 
     def __init__(self, **data):
         try:
@@ -52,21 +64,26 @@ class Configuration(BaseModel):
             error_messages = [f"{'.'.join(str(loc) for loc in err['loc'])}: {err['msg']}" for err in e.errors()]
             raise UserException(f"Configuration error: {', '.join(error_messages)}")
 
+        if not self.essbase_host and not self.hyperion_url:
+            raise UserException("Connection settings require either 'essbase_host' or 'hyperion_url'.")
+
         if self.debug:
             logging.getLogger().setLevel(logging.DEBUG)
 
     def get_essbase_host(self) -> str:
-        """Return Essbase host."""
-        return self.essbase_host
+        """Return Essbase host — falls back to the host from hyperion_url if essbase_host is not set."""
+        if self.essbase_host:
+            return self.essbase_host
+        return urlparse(self.hyperion_url).hostname or self.hyperion_url
 
 
 class RowConfiguration(BaseModel):
     """Row-level configuration — one row per write operation."""
 
+    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+
     source: SourceConfig
     destination: DestinationConfig
-
-    model_config = {"populate_by_name": True, "extra": "ignore"}
 
     def __init__(self, **data):
         try:
