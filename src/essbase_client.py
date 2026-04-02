@@ -36,6 +36,10 @@ class EssbaseClient:
     def get_databases(self, application: str) -> list[dict]:
         return self._get(f"/applications/{application}/databases").get("items", [])
 
+    def get_dimensions(self, application: str, database: str) -> list[str]:
+        data = self._get(f"/applications/{application}/databases/{database}/dimensions")
+        return [dim["name"] for dim in data.get("items", [])]
+
     def import_data_slice(
         self,
         application: str,

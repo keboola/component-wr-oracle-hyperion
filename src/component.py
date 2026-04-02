@@ -11,7 +11,6 @@ from collections.abc import Iterator
 from itertools import islice
 from pathlib import Path
 
-import requests
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.exceptions import UserException
 from keboola.component.sync_actions import SelectElement
@@ -63,28 +62,31 @@ class Component(ComponentBase):
 
     @sync_action("listColumns")
     def list_columns(self) -> dict:
-        """Fetch columns from the input table via Storage API and inject into _metadata_."""
-        tables = self.configuration.tables_input_mapping
-        if not tables:
-            raise UserException("No input table found. Link an input table in the input mapping first.")
-        source_table = tables[0].source
-        columns = tables[0].columns or self._fetch_table_columns(source_table)
-        if not columns:
-            raise UserException(f"No columns found in table '{source_table}'.")
-        return {"type": "data", "data": {"_metadata_": {"table": {"id": source_table, "columns": columns}}}}
+        """Connect to Essbase and auto-populate column mapping with cube dimensions.
 
-    def _fetch_table_columns(self, table_id: str) -> list[str]:
-        url = self.environment_variables.url
-        token = self.environment_variables.token
-        if not url or not token:
-            raise UserException("Cannot fetch table columns: KBC_URL or KBC_TOKEN not available.")
-        resp = requests.get(
-            f"{url.rstrip('/')}/v2/storage/tables/{table_id}",
-            headers={"X-StorageApi-Token": token},
-            timeout=30,
-        )
-        resp.raise_for_status()
-        return resp.json().get("columns", [])
+        Fetches dimension names from the selected application/database and injects
+        them as destination entries in source.column_mapping, preserving any
+        existing source assignments.
+        """
+        destination = self.configuration.parameters.get("destination", {})
+        application = destination.get("application", "")
+        database = destination.get("database", "")
+        if not application or not database:
+            raise UserException("Select an Application and Database/Cube first.")
+
+        client = self._build_essbase_client()
+        dimensions = client.get_dimensions(application, database)
+        if not dimensions:
+            raise UserException(f"No dimensions found in {application}/{database}.")
+
+        current_source = self.configuration.parameters.get("source", {})
+        existing_by_dest = {m["destination"]: m for m in current_source.get("column_mapping", [])}
+        new_mapping = [
+            existing_by_dest.get(dim, {"source": "", "destination": dim})
+            for dim in dimensions
+        ]
+
+        return {"type": "data", "data": {"source": {**current_source, "column_mapping": new_mapping}}}
 
     @sync_action("testConnection")
     def test_connection(self) -> dict:
