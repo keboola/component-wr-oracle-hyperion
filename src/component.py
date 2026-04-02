@@ -15,7 +15,7 @@ from keboola.component.base import ComponentBase, sync_action
 from keboola.component.exceptions import UserException
 from keboola.component.sync_actions import SelectElement
 
-from configuration import ColumnMapping, Configuration, RowConfiguration
+from configuration import ColumnMapping, Configuration
 from essbase_client import EssbaseClient
 
 
@@ -32,35 +32,16 @@ class Component(ComponentBase):
         self.params = Configuration(**self.configuration.parameters)
 
     def run(self):
-        raw_rows = self.configuration.config_data.get("config_rows", [])
-
-        if raw_rows:
-            rows_to_process = [
-                RowConfiguration(**row.get("parameters", {})) for row in raw_rows if not row.get("is_disabled")
-            ]
-            if not rows_to_process:
-                raise UserException("No active configuration rows defined. Enable at least one row.")
-        else:
-            rows_to_process = [RowConfiguration(**self.configuration.parameters)]
-
-        client = None
-
-        for row_params in rows_to_process:
-            logging.info(
-                "Processing: app=%s db=%s",
-                row_params.destination.application,
-                row_params.destination.database,
-            )
-            if client is None:
-                client = self._build_essbase_client(self.params)
-                version = client.verify_connection()
-                logging.info("Connected to Essbase version: %s", version)
-            self._write_essbase(client, row_params)
+        logging.info("Processing: app=%s db=%s", self.params.destination.application, self.params.destination.database)
+        client = self._build_essbase_client()
+        version = client.verify_connection()
+        logging.info("Connected to Essbase version: %s", version)
+        self._write_essbase(client)
 
     @sync_action("listApplications")
     def list_applications(self) -> list[SelectElement]:
         """Return all Essbase applications for the destination dropdown."""
-        client = self._build_essbase_client(self.params)
+        client = self._build_essbase_client()
         apps = client.get_applications()
         return [SelectElement(value=app["name"], label=app.get("alias") or app["name"]) for app in apps]
 
@@ -71,7 +52,7 @@ class Component(ComponentBase):
         application = destination.get("application", "")
         if not application:
             raise UserException("Select or enter an Application name first, then reload databases.")
-        client = self._build_essbase_client(self.params)
+        client = self._build_essbase_client()
         databases = client.get_databases(application)
         return [SelectElement(value=db["name"], label=db.get("alias") or db["name"]) for db in databases]
 
@@ -87,53 +68,56 @@ class Component(ComponentBase):
     @sync_action("testConnection")
     def test_connection(self) -> dict:
         """Sync action: verify Essbase connectivity and return version."""
-        client = self._build_essbase_client(self.params)
+        client = self._build_essbase_client()
         version = client.verify_connection()
         return {"status": "success", "message": f"Connected to Essbase {version}"}
 
-    def _build_essbase_client(self, params: Configuration) -> EssbaseClient:
-        host = params.get_essbase_host()
-        logging.info("Connecting to Essbase at %s:%d", host, params.essbase_port)
+    def _build_essbase_client(self) -> EssbaseClient:
+        host = self.params.get_essbase_host()
+        logging.info("Connecting to Essbase at %s:%d", host, self.params.essbase_port)
         return EssbaseClient(
             host=host,
-            port=params.essbase_port,
-            username=params.username,
-            password=params.password,
-            use_ssl=params.use_ssl,
-            ssl_verify=params.ssl_verify,
+            port=self.params.essbase_port,
+            username=self.params.username,
+            password=self.params.password,
+            use_ssl=self.params.use_ssl,
+            ssl_verify=self.params.ssl_verify,
         )
 
-    def _write_essbase(self, client: EssbaseClient, row: RowConfiguration) -> None:
-        headers, data_rows = self._read_table(row.source.input_table)
+    def _write_essbase(self, client: EssbaseClient) -> None:
+        headers, data_rows = self._read_table(self.params.source.input_table)
         if not headers:
-            logging.warning("Input table '%s' is empty — skipping.", row.source.input_table)
+            logging.warning("Input table '%s' is empty — skipping.", self.params.source.input_table)
             return
 
-        if row.source.column_mapping:
-            headers, data_rows = self._apply_column_mapping(headers, data_rows, row.source.column_mapping)
+        if self.params.source.column_mapping:
+            headers, data_rows = self._apply_column_mapping(headers, data_rows, self.params.source.column_mapping)
             logging.info("Applied column mapping: %d column(s) -> %s", len(headers), headers)
 
         total = 0
-        for batch in _batched(data_rows, row.source.batch_size):
+        for batch in _batched(data_rows, self.params.source.batch_size):
             client.import_data_slice(
-                row.destination.application,
-                row.destination.database,
+                self.params.destination.application,
+                self.params.destination.database,
                 headers,
                 batch,
-                context_members=row.source.context_members,
+                context_members=self.params.source.context_members,
             )
             total += len(batch)
             logging.info(
-                "Essbase %s/%s: imported %d rows so far.", row.destination.application, row.destination.database, total
+                "Essbase %s/%s: imported %d rows so far.",
+                self.params.destination.application,
+                self.params.destination.database,
+                total,
             )
         if total == 0:
-            logging.warning("Input table '%s' had no data rows — nothing written.", row.source.input_table)
+            logging.warning("Input table '%s' had no data rows — nothing written.", self.params.source.input_table)
         else:
             logging.info(
                 "Essbase write complete: %d total rows to %s/%s.",
                 total,
-                row.destination.application,
-                row.destination.database,
+                self.params.destination.application,
+                self.params.destination.database,
             )
 
     @staticmethod
