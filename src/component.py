@@ -32,6 +32,8 @@ class Component(ComponentBase):
         self.params = Configuration(**self.configuration.parameters)
 
     def run(self):
+        if not self.params.source or not self.params.destination:
+            raise UserException("Configuration error: 'source' and 'destination' are required for the run action.")
         logging.info("Processing: app=%s db=%s", self.params.destination.application, self.params.destination.database)
         client = self._build_essbase_client()
         version = client.verify_connection()

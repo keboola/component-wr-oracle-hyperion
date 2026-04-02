@@ -46,8 +46,8 @@ class Configuration(BaseModel):
     password: str = Field(alias="#password")
     use_ssl: bool = True
     ssl_verify: bool = True
-    source: SourceConfig
-    destination: DestinationConfig
+    source: SourceConfig | None = None
+    destination: DestinationConfig | None = None
 
     @model_validator(mode="before")
     @classmethod
