@@ -59,13 +59,13 @@ class Component(ComponentBase):
         return [SelectElement(value=db["name"], label=db.get("alias") or db["name"]) for db in databases]
 
     @sync_action("listColumns")
-    def list_columns(self) -> list[SelectElement]:
+    def list_columns(self) -> dict:
         """Return columns from the input mapping table via _metadata_."""
         metadata = self.configuration.parameters.get("_metadata_", {})
         columns = metadata.get("table", {}).get("columns", [])
         if not columns:
             raise UserException("No columns found. Link an input table in the input mapping first.")
-        return [SelectElement(value=col, label=col) for col in columns]
+        return {"status": "success", "message": f"Available columns: {', '.join(columns)}"}
 
     @sync_action("testConnection")
     def test_connection(self) -> dict:
