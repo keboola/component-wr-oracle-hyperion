@@ -61,9 +61,6 @@
             "async": {
               "label": "Load Databases",
               "action": "listDatabases"
-            },
-            "dependencies": {
-              "destination.application": true
             }
           }
         }

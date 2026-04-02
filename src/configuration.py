@@ -30,8 +30,8 @@ class DestinationConfig(BaseModel):
 
     model_config = ConfigDict(extra="ignore")
 
-    application: str
-    database: str
+    application: str = ""
+    database: str = ""
 
 
 class Configuration(BaseModel):
