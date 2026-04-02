@@ -1,6 +1,7 @@
 {
   "type": "object",
   "title": "Oracle Hyperion EPM — Connection Settings",
+  "required": ["connection"],
   "properties": {
     "connection": {
       "type": "object",

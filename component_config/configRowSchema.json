@@ -108,13 +108,24 @@
             }
           }
         },
+        "context_members": {
+          "type": "array",
+          "title": "Context Members",
+          "description": "Default members for dimensions not represented as columns (e.g. 'East', 'Actual'). One entry per dimension.",
+          "propertyOrder": 2,
+          "default": [],
+          "items": {
+            "type": "string",
+            "title": "Member"
+          }
+        },
         "batch_size": {
           "type": "integer",
           "title": "Batch Size",
           "description": "Number of rows to send per API call.",
           "default": 1000,
           "minimum": 1,
-          "propertyOrder": 2
+          "propertyOrder": 3
         }
       }
     }
