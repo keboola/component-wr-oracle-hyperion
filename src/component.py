@@ -7,7 +7,6 @@ Essbase (21C REST API) via the dataload streaming endpoint.
 
 import csv
 import logging
-import os
 from collections.abc import Iterator
 from itertools import islice
 from pathlib import Path
@@ -75,13 +74,13 @@ class Component(ComponentBase):
         return {"type": "data", "data": {"_metadata_": {"table": {"id": source_table, "columns": columns}}}}
 
     def _fetch_table_columns(self, table_id: str) -> list[str]:
-        kbc_url = os.environ.get("KBC_URL", "").rstrip("/")
-        kbc_token = os.environ.get("KBC_TOKEN", "")
-        if not kbc_url or not kbc_token:
+        url = self.environment_variables.url
+        token = self.environment_variables.token
+        if not url or not token:
             raise UserException("Cannot fetch table columns: KBC_URL or KBC_TOKEN not available.")
         resp = requests.get(
-            f"{kbc_url}/v2/storage/tables/{table_id}",
-            headers={"X-StorageApi-Token": kbc_token},
+            f"{url.rstrip('/')}/v2/storage/tables/{table_id}",
+            headers={"X-StorageApi-Token": token},
             timeout=30,
         )
         resp.raise_for_status()

@@ -104,24 +104,27 @@
             }
           }
         },
-        "reload_columns": {
-          "type": "button",
-          "format": "sync-action",
-          "propertyOrder": 2,
-          "options": {
-            "async": {
-              "label": "Reload Columns",
-              "action": "listColumns"
-            }
-          }
-        },
         "batch_size": {
           "type": "integer",
           "title": "Batch Size",
           "description": "Number of rows to send per API call.",
           "default": 1000,
           "minimum": 1,
-          "propertyOrder": 3
+          "propertyOrder": 2
+        }
+      }
+    },
+    "reload_columns": {
+      "type": "button",
+      "format": "sync-action",
+      "title": "Reload Columns",
+      "description": "Load column names from the linked input table to populate the column mapping dropdown.",
+      "propertyOrder": 3,
+      "options": {
+        "async": {
+          "label": "Reload Columns",
+          "action": "listColumns",
+          "cache": false
         }
       }
     }
