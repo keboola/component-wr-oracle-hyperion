@@ -13,7 +13,6 @@ from itertools import islice
 from pathlib import Path
 
 import requests
-
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.exceptions import UserException
 from keboola.component.sync_actions import SelectElement
