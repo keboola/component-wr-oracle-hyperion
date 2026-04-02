@@ -7,9 +7,12 @@ Essbase (21C REST API) via the dataload streaming endpoint.
 
 import csv
 import logging
+import os
 from collections.abc import Iterator
 from itertools import islice
 from pathlib import Path
+
+import requests
 
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.exceptions import UserException
@@ -62,12 +65,28 @@ class Component(ComponentBase):
 
     @sync_action("listColumns")
     def list_columns(self) -> dict:
-        """Return columns from the input mapping table via _metadata_."""
-        metadata = self.configuration.parameters.get("_metadata_", {})
-        columns = metadata.get("table", {}).get("columns", [])
+        """Fetch columns from the input table via Storage API and inject into _metadata_."""
+        tables = self.configuration.tables_input_mapping
+        if not tables:
+            raise UserException("No input table found. Link an input table in the input mapping first.")
+        source_table = tables[0].source
+        columns = tables[0].columns or self._fetch_table_columns(source_table)
         if not columns:
-            raise UserException("No columns found. Link an input table in the input mapping first.")
-        return {"status": "success", "message": f"Available columns: {', '.join(columns)}"}
+            raise UserException(f"No columns found in table '{source_table}'.")
+        return {"type": "data", "data": {"_metadata_": {"table": {"id": source_table, "columns": columns}}}}
+
+    def _fetch_table_columns(self, table_id: str) -> list[str]:
+        kbc_url = os.environ.get("KBC_URL", "").rstrip("/")
+        kbc_token = os.environ.get("KBC_TOKEN", "")
+        if not kbc_url or not kbc_token:
+            raise UserException("Cannot fetch table columns: KBC_URL or KBC_TOKEN not available.")
+        resp = requests.get(
+            f"{kbc_url}/v2/storage/tables/{table_id}",
+            headers={"X-StorageApi-Token": kbc_token},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        return resp.json().get("columns", [])
 
     @sync_action("testConnection")
     def test_connection(self) -> dict:
