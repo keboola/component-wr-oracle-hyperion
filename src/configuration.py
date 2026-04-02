@@ -42,8 +42,8 @@ class Configuration(BaseModel):
     hyperion_url: str = ""
     essbase_host: str = ""
     essbase_port: int = 9010
-    username: str
-    password: str = Field(alias="#password")
+    username: str = ""
+    password: str = Field(default="", alias="#password")
     use_ssl: bool = True
     ssl_verify: bool = True
     source: SourceConfig | None = None
@@ -63,9 +63,6 @@ class Configuration(BaseModel):
         except ValidationError as e:
             error_messages = [f"{'.'.join(str(loc) for loc in err['loc'])}: {err['msg']}" for err in e.errors()]
             raise UserException(f"Configuration error: {', '.join(error_messages)}")
-
-        if not self.essbase_host and not self.hyperion_url:
-            raise UserException("Connection settings require either 'essbase_host' or 'hyperion_url'.")
 
     def get_essbase_host(self) -> str:
         """Return Essbase host — falls back to the host from hyperion_url if essbase_host is not set."""

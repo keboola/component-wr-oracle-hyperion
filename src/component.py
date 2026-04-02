@@ -95,6 +95,10 @@ class Component(ComponentBase):
         return {"status": "success", "message": f"Connected to Essbase {version}"}
 
     def _build_essbase_client(self) -> EssbaseClient:
+        if not self.params.essbase_host and not self.params.hyperion_url:
+            raise UserException("Connection settings require either 'essbase_host' or 'hyperion_url'.")
+        if not self.params.username or not self.params.password:
+            raise UserException("Connection settings require 'username' and 'password'.")
         host = self.params.get_essbase_host()
         logging.info("Connecting to Essbase at %s:%d", host, self.params.essbase_port)
         return EssbaseClient(
