@@ -1,7 +1,6 @@
 {
   "type": "object",
   "title": "Write Configuration",
-  "required": ["source", "destination"],
   "properties": {
     "_metadata_": {
       "type": "object",
