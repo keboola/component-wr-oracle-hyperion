@@ -8,29 +8,21 @@
       "#password": "DUMMY_PASSWORD",
       "ssl_verify": false,
       "use_ssl": false
+    },
+    "source": {
+      "input_table": "essbase_empty",
+      "batch_size": 1000,
+      "context_members": [
+        "East",
+        "Actual",
+        "Sales"
+      ]
+    },
+    "destination": {
+      "application": "Sample",
+      "database": "Basic"
     }
   },
-  "config_rows": [
-    {
-      "id": "write-empty",
-      "is_disabled": false,
-      "parameters": {
-        "source": {
-          "input_table": "essbase_empty",
-          "batch_size": 1000,
-          "context_members": [
-            "East",
-            "Actual",
-            "Sales"
-          ]
-        },
-        "destination": {
-          "application": "Sample",
-          "database": "Basic"
-        }
-      }
-    }
-  ],
   "storage": {
     "input": {
       "tables": [

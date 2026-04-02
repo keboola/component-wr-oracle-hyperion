@@ -1,241 +1,7 @@
 [
   {
     "name": "01_write_essbase_basic",
-    "description": "Write two rows to Essbase Sample/Basic via config_rows",
-    "config": {
-      "action": "run",
-      "parameters": {
-        "connection": {
-          "essbase_host": "34.31.58.133",
-          "essbase_port": 9010,
-          "username": "admin",
-          "#password": "DUMMY_PASSWORD",
-          "ssl_verify": false,
-          "use_ssl": false
-        }
-      },
-      "config_rows": [
-        {
-          "id": "write-sample-basic",
-          "is_disabled": false,
-          "parameters": {
-            "source": {
-              "input_table": "essbase_sample_basic",
-              "batch_size": 1000,
-              "context_members": [
-                "East",
-                "Actual",
-                "Sales"
-              ]
-            },
-            "destination": {
-              "application": "Sample",
-              "database": "Basic"
-            }
-          }
-        }
-      ],
-      "storage": {
-        "input": {
-          "tables": [
-            {
-              "source": "essbase_sample_basic.csv",
-              "destination": "essbase_sample_basic.csv"
-            }
-          ]
-        }
-      }
-    }
-  },
-  {
-    "name": "03_write_essbase_disabled_row",
-    "description": "Disabled config_row is skipped; only active row writes to Essbase",
-    "config": {
-      "action": "run",
-      "parameters": {
-        "connection": {
-          "essbase_host": "34.31.58.133",
-          "essbase_port": 9010,
-          "username": "admin",
-          "#password": "DUMMY_PASSWORD",
-          "ssl_verify": false,
-          "use_ssl": false
-        }
-      },
-      "config_rows": [
-        {
-          "id": "disabled-row",
-          "is_disabled": true,
-          "parameters": {
-            "source": {
-              "input_table": "should_not_be_sent",
-              "batch_size": 1000,
-              "context_members": [
-                "East",
-                "Actual",
-                "Sales"
-              ]
-            },
-            "destination": {
-              "application": "Sample",
-              "database": "Basic"
-            }
-          }
-        },
-        {
-          "id": "active-row",
-          "is_disabled": false,
-          "parameters": {
-            "source": {
-              "input_table": "essbase_sample_basic",
-              "batch_size": 1000,
-              "context_members": [
-                "East",
-                "Actual",
-                "Sales"
-              ]
-            },
-            "destination": {
-              "application": "Sample",
-              "database": "Basic"
-            }
-          }
-        }
-      ],
-      "storage": {
-        "input": {
-          "tables": [
-            {
-              "source": "essbase_sample_basic_single.csv",
-              "destination": "essbase_sample_basic.csv"
-            }
-          ]
-        }
-      }
-    }
-  },
-  {
-    "name": "04_write_essbase_multiple_rows",
-    "description": "Two active config_rows each writing a different Essbase table",
-    "config": {
-      "action": "run",
-      "parameters": {
-        "connection": {
-          "essbase_host": "34.31.58.133",
-          "essbase_port": 9010,
-          "username": "admin",
-          "#password": "DUMMY_PASSWORD",
-          "ssl_verify": false,
-          "use_ssl": false
-        }
-      },
-      "config_rows": [
-        {
-          "id": "write-cola",
-          "is_disabled": false,
-          "parameters": {
-            "source": {
-              "input_table": "essbase_cola",
-              "batch_size": 1000,
-              "context_members": [
-                "East",
-                "Actual",
-                "Sales"
-              ]
-            },
-            "destination": {
-              "application": "Sample",
-              "database": "Basic"
-            }
-          }
-        },
-        {
-          "id": "write-root-beer",
-          "is_disabled": false,
-          "parameters": {
-            "source": {
-              "input_table": "essbase_root_beer",
-              "batch_size": 1000,
-              "context_members": [
-                "East",
-                "Actual",
-                "Sales"
-              ]
-            },
-            "destination": {
-              "application": "Sample",
-              "database": "Basic"
-            }
-          }
-        }
-      ],
-      "storage": {
-        "input": {
-          "tables": [
-            {
-              "source": "essbase_cola.csv",
-              "destination": "essbase_cola.csv"
-            },
-            {
-              "source": "essbase_root_beer.csv",
-              "destination": "essbase_root_beer.csv"
-            }
-          ]
-        }
-      }
-    }
-  },
-  {
-    "name": "05_write_essbase_batched",
-    "description": "batch_size=1 with 3 rows — verifies each row is sent as a separate POST",
-    "config": {
-      "action": "run",
-      "parameters": {
-        "connection": {
-          "essbase_host": "34.31.58.133",
-          "essbase_port": 9010,
-          "username": "admin",
-          "#password": "DUMMY_PASSWORD",
-          "ssl_verify": false,
-          "use_ssl": false
-        }
-      },
-      "config_rows": [
-        {
-          "id": "write-batched",
-          "is_disabled": false,
-          "parameters": {
-            "source": {
-              "input_table": "essbase_three_rows",
-              "batch_size": 1,
-              "context_members": [
-                "East",
-                "Actual",
-                "Sales"
-              ]
-            },
-            "destination": {
-              "application": "Sample",
-              "database": "Basic"
-            }
-          }
-        }
-      ],
-      "storage": {
-        "input": {
-          "tables": [
-            {
-              "source": "essbase_three_rows.csv",
-              "destination": "essbase_three_rows.csv"
-            }
-          ]
-        }
-      }
-    }
-  },
-  {
-    "name": "06_write_essbase_flat_config",
-    "description": "No config_rows — row params are read directly from parameters (flat config fallback)",
+    "description": "Basic write — 2 rows sent to Sample/Basic with context members",
     "config": {
       "action": "run",
       "parameters": {
@@ -250,11 +16,7 @@
         "source": {
           "input_table": "essbase_sample_basic",
           "batch_size": 1000,
-          "context_members": [
-            "East",
-            "Actual",
-            "Sales"
-          ]
+          "context_members": ["East", "Actual", "Sales"]
         },
         "destination": {
           "application": "Sample",
@@ -264,18 +26,15 @@
       "storage": {
         "input": {
           "tables": [
-            {
-              "source": "essbase_sample_basic.csv",
-              "destination": "essbase_sample_basic.csv"
-            }
+            {"source": "essbase_sample_basic.csv", "destination": "essbase_sample_basic.csv"}
           ]
         }
       }
     }
   },
   {
-    "name": "08_write_essbase_empty_table",
-    "description": "Input CSV has headers but zero data rows — component should log a warning and make no API calls",
+    "name": "03_write_essbase_single_row",
+    "description": "Single-row input — verifies the component handles a 1-row CSV correctly",
     "config": {
       "action": "run",
       "parameters": {
@@ -286,36 +45,234 @@
           "#password": "DUMMY_PASSWORD",
           "ssl_verify": false,
           "use_ssl": false
+        },
+        "source": {
+          "input_table": "essbase_sample_basic_single",
+          "batch_size": 1000,
+          "context_members": ["East", "Actual", "Sales"]
+        },
+        "destination": {
+          "application": "Sample",
+          "database": "Basic"
         }
       },
-      "config_rows": [
-        {
-          "id": "write-empty",
-          "is_disabled": false,
-          "parameters": {
-            "source": {
-              "input_table": "essbase_empty",
-              "batch_size": 1000,
-              "context_members": [
-                "East",
-                "Actual",
-                "Sales"
-              ]
-            },
-            "destination": {
-              "application": "Sample",
-              "database": "Basic"
-            }
-          }
-        }
-      ],
       "storage": {
         "input": {
           "tables": [
-            {
-              "source": "essbase_empty.csv",
-              "destination": "essbase_empty.csv"
-            }
+            {"source": "essbase_sample_basic_single.csv", "destination": "essbase_sample_basic_single.csv"}
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "04_write_essbase_partial_mapping_no_context",
+    "description": "Partial column mapping combined with explicit context_members — tests the two features together",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "connection": {
+          "essbase_host": "34.31.58.133",
+          "essbase_port": 9010,
+          "username": "admin",
+          "#password": "DUMMY_PASSWORD",
+          "ssl_verify": false,
+          "use_ssl": false
+        },
+        "source": {
+          "input_table": "essbase_four_cols",
+          "batch_size": 1000,
+          "context_members": ["West", "Actual", "Sales"],
+          "column_mapping": [
+            {"source": "Product", "destination": "Product"},
+            {"source": "Feb", "destination": "Feb"}
+          ]
+        },
+        "destination": {
+          "application": "Sample",
+          "database": "Basic"
+        }
+      },
+      "storage": {
+        "input": {
+          "tables": [
+            {"source": "essbase_four_cols.csv", "destination": "essbase_four_cols.csv"}
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "05_write_essbase_batched",
+    "description": "batch_size=1 with 3 rows — each row is a separate API call (3 stream open/push/close cycles)",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "connection": {
+          "essbase_host": "34.31.58.133",
+          "essbase_port": 9010,
+          "username": "admin",
+          "#password": "DUMMY_PASSWORD",
+          "ssl_verify": false,
+          "use_ssl": false
+        },
+        "source": {
+          "input_table": "essbase_three_rows",
+          "batch_size": 1,
+          "context_members": ["East", "Actual", "Sales"]
+        },
+        "destination": {
+          "application": "Sample",
+          "database": "Basic"
+        }
+      },
+      "storage": {
+        "input": {
+          "tables": [
+            {"source": "essbase_three_rows.csv", "destination": "essbase_three_rows.csv"}
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "07_write_essbase_partial_mapping",
+    "description": "column_mapping selects 2 of 4 columns — Feb and Mar are dropped before sending to Essbase",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "connection": {
+          "essbase_host": "34.31.58.133",
+          "essbase_port": 9010,
+          "username": "admin",
+          "#password": "DUMMY_PASSWORD",
+          "ssl_verify": false,
+          "use_ssl": false
+        },
+        "source": {
+          "input_table": "essbase_four_cols",
+          "batch_size": 1000,
+          "context_members": ["East", "Actual", "Sales"],
+          "column_mapping": [
+            {"source": "Product", "destination": "Product"},
+            {"source": "Jan", "destination": "Jan"}
+          ]
+        },
+        "destination": {
+          "application": "Sample",
+          "database": "Basic"
+        }
+      },
+      "storage": {
+        "input": {
+          "tables": [
+            {"source": "essbase_four_cols.csv", "destination": "essbase_four_cols.csv"}
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "08_write_essbase_empty_table",
+    "description": "Input CSV has headers but zero data rows — component logs a warning and makes no API calls",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "connection": {
+          "essbase_host": "34.31.58.133",
+          "essbase_port": 9010,
+          "username": "admin",
+          "#password": "DUMMY_PASSWORD",
+          "ssl_verify": false,
+          "use_ssl": false
+        },
+        "source": {
+          "input_table": "essbase_empty",
+          "batch_size": 1000,
+          "context_members": ["East", "Actual", "Sales"]
+        },
+        "destination": {
+          "application": "Sample",
+          "database": "Basic"
+        }
+      },
+      "storage": {
+        "input": {
+          "tables": [
+            {"source": "essbase_empty.csv", "destination": "essbase_empty.csv"}
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "09_write_essbase_full_mapping",
+    "description": "column_mapping covers all 4 CSV columns and renames the period columns to valid later-period Essbase members — verifies rename logic end-to-end",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "connection": {
+          "essbase_host": "34.31.58.133",
+          "essbase_port": 9010,
+          "username": "admin",
+          "#password": "DUMMY_PASSWORD",
+          "ssl_verify": false,
+          "use_ssl": false
+        },
+        "source": {
+          "input_table": "essbase_four_cols",
+          "batch_size": 1000,
+          "context_members": ["East", "Actual", "Sales"],
+          "column_mapping": [
+            {"source": "Product", "destination": "Product"},
+            {"source": "Jan", "destination": "Feb"},
+            {"source": "Feb", "destination": "Mar"},
+            {"source": "Mar", "destination": "Apr"}
+          ]
+        },
+        "destination": {
+          "application": "Sample",
+          "database": "Basic"
+        }
+      },
+      "storage": {
+        "input": {
+          "tables": [
+            {"source": "essbase_four_cols.csv", "destination": "essbase_four_cols.csv"}
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "10_write_essbase_no_mapping",
+    "description": "Empty column_mapping — all 4 columns pass through unchanged (no filtering or renaming)",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "connection": {
+          "essbase_host": "34.31.58.133",
+          "essbase_port": 9010,
+          "username": "admin",
+          "#password": "DUMMY_PASSWORD",
+          "ssl_verify": false,
+          "use_ssl": false
+        },
+        "source": {
+          "input_table": "essbase_four_cols",
+          "batch_size": 1000,
+          "context_members": ["East", "Actual", "Sales"],
+          "column_mapping": []
+        },
+        "destination": {
+          "application": "Sample",
+          "database": "Basic"
+        }
+      },
+      "storage": {
+        "input": {
+          "tables": [
+            {"source": "essbase_four_cols.csv", "destination": "essbase_four_cols.csv"}
           ]
         }
       }
