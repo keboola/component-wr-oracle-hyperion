@@ -1,4 +1,3 @@
-import logging
 from urllib.parse import urlparse
 
 from keboola.component.exceptions import UserException
@@ -36,7 +35,7 @@ class DestinationConfig(BaseModel):
 
 
 class Configuration(BaseModel):
-    """Root-level component configuration — authentication and server settings."""
+    """Full component configuration — connection settings plus write operation parameters."""
 
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
 
@@ -47,7 +46,8 @@ class Configuration(BaseModel):
     password: str = Field(alias="#password")
     use_ssl: bool = True
     ssl_verify: bool = True
-    debug: bool = False
+    source: SourceConfig
+    destination: DestinationConfig
 
     @model_validator(mode="before")
     @classmethod
@@ -67,27 +67,8 @@ class Configuration(BaseModel):
         if not self.essbase_host and not self.hyperion_url:
             raise UserException("Connection settings require either 'essbase_host' or 'hyperion_url'.")
 
-        if self.debug:
-            logging.getLogger().setLevel(logging.DEBUG)
-
     def get_essbase_host(self) -> str:
         """Return Essbase host — falls back to the host from hyperion_url if essbase_host is not set."""
         if self.essbase_host:
             return self.essbase_host
         return urlparse(self.hyperion_url).hostname or self.hyperion_url
-
-
-class RowConfiguration(BaseModel):
-    """Row-level configuration — one row per write operation."""
-
-    model_config = ConfigDict(populate_by_name=True, extra="ignore")
-
-    source: SourceConfig
-    destination: DestinationConfig
-
-    def __init__(self, **data):
-        try:
-            super().__init__(**data)
-        except ValidationError as e:
-            error_messages = [f"{'.'.join(str(loc) for loc in err['loc'])}: {err['msg']}" for err in e.errors()]
-            raise UserException(f"Row configuration error: {', '.join(error_messages)}")
