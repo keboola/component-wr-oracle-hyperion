@@ -8,17 +8,8 @@
       "title": "Connection Settings",
       "format": "grid-strict",
       "propertyOrder": 1,
-      "required": ["hyperion_url", "username", "#password"],
+      "required": ["essbase_host", "username", "#password"],
       "properties": {
-        "hyperion_url": {
-          "type": "string",
-          "title": "Hyperion Server URL",
-          "description": "Base URL of the Hyperion EPM server including port (e.g. http://hyperiondev:9000)",
-          "propertyOrder": 1,
-          "options": {
-            "grid_columns": 12
-          }
-        },
         "username": {
           "type": "string",
           "title": "Username",
@@ -40,7 +31,7 @@
         "essbase_host": {
           "type": "string",
           "title": "Essbase Host",
-          "description": "Essbase server hostname or IP. Defaults to the host from Hyperion Server URL if left empty.",
+          "description": "Essbase server hostname or IP address.",
           "propertyOrder": 4,
           "options": {
             "grid_columns": 6
