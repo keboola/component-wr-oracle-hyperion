@@ -18,23 +18,27 @@
     }
   },
   "parameters": {
-    "essbase_host": "essbase.example.com",
-    "essbase_port": 9010,
-    "username": "admin",
-    "#password": "your_password_here",
-    "ssl_verify": true,
-    "debug": false
+    "connection": {
+      "hyperion_url": "http://hyperiondev:9000",
+      "username": "admin",
+      "#password": "your_password_here",
+      "essbase_port": 9010
+    }
   },
   "config_rows": [
     {
       "id": "write-sample-basic",
       "is_disabled": false,
       "parameters": {
-        "application": "Sample",
-        "database": "Basic",
-        "input_table": "essbase_sample_basic",
-        "context_members": ["East", "Actual", "Sales"],
-        "batch_size": 1000
+        "source": {
+          "input_table": "essbase_sample_basic",
+          "context_members": ["East", "Actual", "Sales"],
+          "batch_size": 1000
+        },
+        "destination": {
+          "application": "Sample",
+          "database": "Basic"
+        }
       }
     }
   ],

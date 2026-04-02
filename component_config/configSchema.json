@@ -1,63 +1,91 @@
 {
   "type": "object",
-  "title": "Oracle Essbase — Connection Settings",
-  "required": ["essbase_host", "username", "#password"],
+  "title": "Oracle Hyperion EPM — Connection Settings",
   "properties": {
-    "essbase_host": {
-      "type": "string",
-      "title": "Essbase Host",
-      "description": "Essbase server hostname or IP address (e.g. essbase.example.com or 10.0.0.4)",
-      "propertyOrder": 1
-    },
-    "essbase_port": {
-      "type": "integer",
-      "title": "Essbase REST API Port",
-      "description": "Port for Essbase 21C REST API (default: 9010)",
-      "default": 9010,
-      "propertyOrder": 2
-    },
-    "username": {
-      "type": "string",
-      "title": "Username",
-      "propertyOrder": 3
-    },
-    "#password": {
-      "type": "string",
-      "title": "Password",
-      "format": "password",
-      "propertyOrder": 4
-    },
-    "use_ssl": {
-      "type": "boolean",
-      "title": "Use SSL",
-      "description": "Connect to Essbase over HTTPS (recommended). Disable only for plain HTTP environments.",
-      "format": "checkbox",
-      "default": true,
-      "propertyOrder": 5
-    },
-    "ssl_verify": {
-      "type": "boolean",
-      "title": "Verify SSL Certificate",
-      "description": "Validate the server's SSL certificate. Disable only when using self-signed certificates.",
-      "format": "checkbox",
-      "default": true,
-      "propertyOrder": 6
-    },
-    "debug": {
-      "type": "boolean",
-      "title": "Debug Mode",
-      "format": "checkbox",
-      "default": false,
-      "propertyOrder": 7
-    },
-    "test_connection": {
-      "type": "button",
-      "format": "test-connection",
-      "propertyOrder": 8,
-      "options": {
-        "async": {
-          "label": "Test Connection",
-          "action": "testConnection"
+    "connection": {
+      "type": "object",
+      "title": "Connection Settings",
+      "format": "grid-strict",
+      "propertyOrder": 1,
+      "required": ["hyperion_url", "username", "#password"],
+      "properties": {
+        "hyperion_url": {
+          "type": "string",
+          "title": "Hyperion Server URL",
+          "description": "Base URL of the Hyperion EPM server including port (e.g. http://hyperiondev:9000)",
+          "propertyOrder": 1,
+          "options": {
+            "grid_columns": 12
+          }
+        },
+        "username": {
+          "type": "string",
+          "title": "Username",
+          "description": "Shared Services (CSS) username",
+          "propertyOrder": 2,
+          "options": {
+            "grid_columns": 6
+          }
+        },
+        "#password": {
+          "type": "string",
+          "title": "Password",
+          "format": "password",
+          "propertyOrder": 3,
+          "options": {
+            "grid_columns": 6
+          }
+        },
+        "essbase_host": {
+          "type": "string",
+          "title": "Essbase Host",
+          "description": "Essbase server hostname or IP. Defaults to the host from Hyperion Server URL if left empty.",
+          "propertyOrder": 4,
+          "options": {
+            "grid_columns": 6
+          }
+        },
+        "essbase_port": {
+          "type": "integer",
+          "title": "Essbase REST API Port",
+          "description": "Port for Essbase 21C REST API (default: 9010)",
+          "default": 9010,
+          "propertyOrder": 5,
+          "options": {
+            "grid_columns": 3
+          }
+        },
+        "test_connection": {
+          "type": "button",
+          "format": "test-connection",
+          "propertyOrder": 6,
+          "options": {
+            "async": {
+              "label": "Test Connection",
+              "action": "testConnection"
+            },
+            "grid_columns": 3
+          }
+        },
+        "use_ssl": {
+          "type": "boolean",
+          "title": "Use SSL (HTTPS)",
+          "description": "Connect to the Essbase REST API over HTTPS. Disable for plain HTTP servers.",
+          "default": true,
+          "propertyOrder": 7,
+          "options": {
+            "grid_columns": 6
+          }
+        },
+        "ssl_verify": {
+          "type": "boolean",
+          "title": "Verify SSL Certificate",
+          "description": "Verify the server's SSL certificate. Disable only for self-signed certificates.",
+          "default": true,
+          "propertyOrder": 8,
+          "options": {
+            "grid_columns": 6
+          }
         }
       }
     }

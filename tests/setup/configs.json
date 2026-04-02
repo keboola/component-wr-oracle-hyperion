@@ -5,12 +5,14 @@
     "config": {
       "action": "run",
       "parameters": {
-        "username": "admin",
-        "#password": "DUMMY_PASSWORD",
-        "essbase_host": "34.31.58.133",
-        "essbase_port": 9010,
-        "ssl_verify": false,
-        "use_ssl": false
+        "connection": {
+          "essbase_host": "34.31.58.133",
+          "essbase_port": 9010,
+          "username": "admin",
+          "#password": "DUMMY_PASSWORD",
+          "ssl_verify": false,
+          "use_ssl": false
+        }
       },
       "config_rows": [
         {
@@ -51,12 +53,14 @@
     "config": {
       "action": "run",
       "parameters": {
-        "username": "admin",
-        "#password": "DUMMY_PASSWORD",
-        "essbase_host": "34.31.58.133",
-        "essbase_port": 9010,
-        "ssl_verify": false,
-        "use_ssl": false
+        "connection": {
+          "essbase_host": "34.31.58.133",
+          "essbase_port": 9010,
+          "username": "admin",
+          "#password": "DUMMY_PASSWORD",
+          "ssl_verify": false,
+          "use_ssl": false
+        }
       },
       "config_rows": [
         {
@@ -116,12 +120,14 @@
     "config": {
       "action": "run",
       "parameters": {
-        "username": "admin",
-        "#password": "DUMMY_PASSWORD",
-        "essbase_host": "34.31.58.133",
-        "essbase_port": 9010,
-        "ssl_verify": false,
-        "use_ssl": false
+        "connection": {
+          "essbase_host": "34.31.58.133",
+          "essbase_port": 9010,
+          "username": "admin",
+          "#password": "DUMMY_PASSWORD",
+          "ssl_verify": false,
+          "use_ssl": false
+        }
       },
       "config_rows": [
         {
@@ -181,16 +187,18 @@
   },
   {
     "name": "05_write_essbase_batched",
-    "description": "batch_size=1 with 3 rows \u2014 verifies each row is sent as a separate POST",
+    "description": "batch_size=1 with 3 rows — verifies each row is sent as a separate POST",
     "config": {
       "action": "run",
       "parameters": {
-        "username": "admin",
-        "#password": "DUMMY_PASSWORD",
-        "essbase_host": "34.31.58.133",
-        "essbase_port": 9010,
-        "ssl_verify": false,
-        "use_ssl": false
+        "connection": {
+          "essbase_host": "34.31.58.133",
+          "essbase_port": 9010,
+          "username": "admin",
+          "#password": "DUMMY_PASSWORD",
+          "ssl_verify": false,
+          "use_ssl": false
+        }
       },
       "config_rows": [
         {
@@ -227,16 +235,18 @@
   },
   {
     "name": "06_write_essbase_flat_config",
-    "description": "No config_rows \u2014 row params are read directly from parameters (flat config fallback)",
+    "description": "No config_rows — row params are read directly from parameters (flat config fallback)",
     "config": {
       "action": "run",
       "parameters": {
-        "username": "admin",
-        "#password": "DUMMY_PASSWORD",
-        "essbase_host": "34.31.58.133",
-        "essbase_port": 9010,
-        "ssl_verify": false,
-        "use_ssl": false,
+        "connection": {
+          "essbase_host": "34.31.58.133",
+          "essbase_port": 9010,
+          "username": "admin",
+          "#password": "DUMMY_PASSWORD",
+          "ssl_verify": false,
+          "use_ssl": false
+        },
         "source": {
           "input_table": "essbase_sample_basic",
           "batch_size": 1000,
@@ -265,16 +275,18 @@
   },
   {
     "name": "08_write_essbase_empty_table",
-    "description": "Input CSV has headers but zero data rows \u2014 component should log a warning and make no API calls",
+    "description": "Input CSV has headers but zero data rows — component should log a warning and make no API calls",
     "config": {
       "action": "run",
       "parameters": {
-        "username": "admin",
-        "#password": "DUMMY_PASSWORD",
-        "essbase_host": "34.31.58.133",
-        "essbase_port": 9010,
-        "ssl_verify": false,
-        "use_ssl": false
+        "connection": {
+          "essbase_host": "34.31.58.133",
+          "essbase_port": 9010,
+          "username": "admin",
+          "#password": "DUMMY_PASSWORD",
+          "ssl_verify": false,
+          "use_ssl": false
+        }
       },
       "config_rows": [
         {
