@@ -40,6 +40,13 @@ class EssbaseClient:
         data = self._get(f"/applications/{application}/databases/{database}/dimensions")
         return [dim["name"] for dim in data.get("items", [])]
 
+    def get_top_level_members(self, application: str, database: str, dimension: str) -> list[str]:
+        """Return the immediate children of the dimension root (top-level members)."""
+        data = self._get(f"/applications/{application}/databases/{database}/dimensions/{dimension}/members")
+        # The root node IS the dimension — its children are the top-level members
+        children = data.get("children", []) or data.get("items", [])
+        return [m["name"] for m in children if m.get("name")]
+
     def import_data_slice(
         self,
         application: str,

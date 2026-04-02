@@ -60,6 +60,23 @@ class Component(ComponentBase):
         databases = client.get_databases(application)
         return [SelectElement(value=db["name"], label=db.get("alias") or db["name"]) for db in databases]
 
+    @sync_action("listMembers")
+    def list_members(self) -> list[SelectElement]:
+        """Return top-level members from all dimensions for the context members dropdown."""
+        destination = self.configuration.parameters.get("destination", {})
+        application = destination.get("application", "")
+        database = destination.get("database", "")
+        if not application or not database:
+            raise UserException("Select an Application and Database/Cube first.")
+        client = self._build_essbase_client()
+        dimensions = client.get_dimensions(application, database)
+        elements = []
+        for dim in dimensions:
+            members = client.get_top_level_members(application, database, dim)
+            for member in members:
+                elements.append(SelectElement(value=member, label=f"{member} ({dim})"))
+        return elements
+
     @sync_action("listColumns")
     def list_columns(self) -> dict:
         """Connect to Essbase and auto-populate column mapping with cube dimensions.
