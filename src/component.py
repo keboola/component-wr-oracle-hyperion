@@ -11,6 +11,7 @@ from collections.abc import Iterator
 from itertools import islice
 from pathlib import Path
 
+import requests
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.exceptions import UserException
 from keboola.component.sync_actions import SelectElement
@@ -83,14 +84,18 @@ class Component(ComponentBase):
                 elements.append(SelectElement(value=member, label=f"{member} ({dim})"))
         return elements
 
+    @sync_action("loadColumnMapping")
+    def load_column_mapping(self) -> dict:
+        """Pre-fill column mapping rows from the linked input table's Storage columns."""
+        csv_columns = self._get_input_table_columns()
+        current_source = self.configuration.parameters.get("source", {})
+        existing_by_source = {m["source"]: m for m in current_source.get("column_mapping", []) if isinstance(m, dict)}
+        new_mapping = [existing_by_source.get(col, {"source": col, "destination": col}) for col in csv_columns]
+        return {"type": "data", "data": {"source": {**current_source, "column_mapping": new_mapping}}}
+
     @sync_action("loadContextMembers")
     def load_context_members(self) -> dict:
-        """Populate context members with all base dimensions from the Essbase cube.
-
-        Fetches base dimensions (excludes attribute dimensions) and injects them
-        into source.context_members. Existing member values are preserved.
-        Delete rows for dimensions already covered by your input table columns.
-        """
+        """Populate context members with base Essbase dimensions not covered by input table columns."""
         destination = self.configuration.parameters.get("destination", {})
         application = destination.get("application", "")
         database = destination.get("database", "")
@@ -102,13 +107,54 @@ class Component(ComponentBase):
         if not dimensions:
             raise UserException(f"No dimensions found in {application}/{database}.")
 
+        csv_columns = set(self._get_input_table_columns())
+        unmatched = [dim for dim in dimensions if dim not in csv_columns]
+
         current_source = self.configuration.parameters.get("source", {})
         existing_by_dim = {
             cm["dimension"]: cm for cm in current_source.get("context_members", []) if isinstance(cm, dict)
         }
-        new_context = [existing_by_dim.get(dim, {"dimension": dim, "member": ""}) for dim in dimensions]
-
+        new_context = [existing_by_dim.get(dim, {"dimension": dim, "member": ""}) for dim in unmatched]
         return {"type": "data", "data": {"source": {**current_source, "context_members": new_context}}}
+
+    def _get_input_table_columns(self) -> list[str]:
+        """Return column names for the configured input table.
+
+        Uses ``self.configuration.tables_input_mapping`` (available in sync actions
+        even with partial config).  If the mapping already declares columns they are
+        returned directly; otherwise the Storage API is called with the forwarded token.
+        """
+        tables = self.configuration.tables_input_mapping
+        if not tables:
+            raise UserException("No input table found. Add an input table in the storage settings first.")
+
+        input_table_name = self.configuration.parameters.get("source", {}).get("input_table", "")
+        if input_table_name:
+            table = next((t for t in tables if Path(t.full_path).stem == input_table_name), None)
+            if table is None:
+                raise UserException(f"Input table '{input_table_name}' not found in the storage mapping.")
+        else:
+            table = tables[0]
+
+        if table.columns:
+            return list(table.columns)
+
+        # columns not declared in the mapping — fetch from Storage API
+        token = self.environment_variables.token
+        url = self.environment_variables.url
+        if not token or not url:
+            raise UserException("Storage API token not available. Ensure forward_token is enabled for this component.")
+
+        resp = requests.get(
+            f"{url}/v2/storage/tables/{table.source}",
+            headers={"X-StorageApi-Token": token},
+            timeout=30,
+        )
+        try:
+            resp.raise_for_status()
+        except requests.HTTPError as e:
+            raise UserException(f"Storage API error fetching table columns: {e}") from e
+        return resp.json().get("columns", [])
 
     @sync_action("testConnection")
     def test_connection(self) -> dict:
