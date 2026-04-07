@@ -83,31 +83,13 @@ class Component(ComponentBase):
                 elements.append(SelectElement(value=member, label=f"{member} ({dim})"))
         return elements
 
-    @sync_action("loadColumnMapping")
-    def load_column_mapping(self) -> dict:
-        """Pre-fill column mapping rows from the linked input table's columns.
-
-        Reads column names from _metadata_ and creates a mapping row for each
-        with source and destination pre-filled to the same name. User can change
-        the destination to rename, or delete rows they don't need.
-        """
-        csv_columns = self.configuration.parameters.get("_metadata_", {}).get("table", {}).get("columns", [])
-        if not csv_columns:
-            raise UserException("No input table columns found. Link an input table in the storage settings first.")
-
-        current_source = self.configuration.parameters.get("source", {})
-        existing_by_source = {m["source"]: m for m in current_source.get("column_mapping", []) if isinstance(m, dict)}
-        new_mapping = [existing_by_source.get(col, {"source": col, "destination": col}) for col in csv_columns]
-
-        return {"type": "data", "data": {"source": {**current_source, "column_mapping": new_mapping}}}
-
     @sync_action("loadContextMembers")
     def load_context_members(self) -> dict:
-        """Populate context members with Essbase dimensions not covered by CSV columns.
+        """Populate context members with all base dimensions from the Essbase cube.
 
-        Fetches dimension names from Essbase and injects any dimension absent from
-        the linked input table's columns into source.context_members. Existing
-        entries are preserved.
+        Fetches base dimensions (excludes attribute dimensions) and injects them
+        into source.context_members. Existing member values are preserved.
+        Delete rows for dimensions already covered by your input table columns.
         """
         destination = self.configuration.parameters.get("destination", {})
         application = destination.get("application", "")
@@ -120,14 +102,11 @@ class Component(ComponentBase):
         if not dimensions:
             raise UserException(f"No dimensions found in {application}/{database}.")
 
-        csv_columns = set(self.configuration.parameters.get("_metadata_", {}).get("table", {}).get("columns", []))
-        unmatched = [dim for dim in dimensions if dim not in csv_columns]
-
         current_source = self.configuration.parameters.get("source", {})
         existing_by_dim = {
             cm["dimension"]: cm for cm in current_source.get("context_members", []) if isinstance(cm, dict)
         }
-        new_context = [existing_by_dim.get(dim, {"dimension": dim, "member": ""}) for dim in unmatched]
+        new_context = [existing_by_dim.get(dim, {"dimension": dim, "member": ""}) for dim in dimensions]
 
         return {"type": "data", "data": {"source": {**current_source, "context_members": new_context}}}
 

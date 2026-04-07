@@ -39,8 +39,7 @@ class EssbaseClient:
     def get_dimensions(self, application: str, database: str) -> list[str]:
         data = self._get(f"/applications/{application}/databases/{database}/dimensions")
         items = data.get("items", [])
-        logging.debug("Essbase dimensions raw response: %s", items)
-        return [dim["name"] for dim in items]
+        return [dim["name"] for dim in items if dim.get("storedMembers", 0) > 0]
 
     def get_top_level_members(self, application: str, database: str, dimension: str) -> list[str]:
         """Return the immediate children of the dimension root (top-level members)."""
