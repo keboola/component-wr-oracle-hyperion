@@ -107,7 +107,10 @@ class Component(ComponentBase):
         if not dimensions:
             raise UserException(f"No dimensions found in {application}/{database}.")
 
-        csv_columns = set(self._get_input_table_columns())
+        try:
+            csv_columns = set(self._get_input_table_columns())
+        except UserException:
+            csv_columns = set()
         unmatched = [dim for dim in dimensions if dim not in csv_columns]
 
         current_source = self.configuration.parameters.get("source", {})
@@ -120,33 +123,44 @@ class Component(ComponentBase):
     def _get_input_table_columns(self) -> list[str]:
         """Return column names for the configured input table.
 
-        Uses ``self.configuration.tables_input_mapping`` (available in sync actions
-        even with partial config).  If the mapping already declares columns they are
-        returned directly; otherwise the Storage API is called with the forwarded token.
+        Tries three sources in order:
+        1. tables_input_mapping with columns already declared (no API call needed)
+        2. Storage API using table.source from tables_input_mapping
+        3. Storage API using the table source from the raw storage config
+           (fallback for sync actions where files are not mounted)
         """
-        tables = self.configuration.tables_input_mapping
-        if not tables:
-            raise UserException("No input table found. Add an input table in the storage settings first.")
-
         input_table_name = self.configuration.parameters.get("source", {}).get("input_table", "")
-        if input_table_name:
-            table = next((t for t in tables if Path(t.full_path).stem == input_table_name), None)
-            if table is None:
-                raise UserException(f"Input table '{input_table_name}' not found in the storage mapping.")
-        else:
-            table = tables[0]
+        tables = self.configuration.tables_input_mapping
 
-        if table.columns:
-            return list(table.columns)
+        table_id: str | None = None
 
-        # columns not declared in the mapping — fetch from Storage API
+        if tables:
+            if input_table_name:
+                table = next((t for t in tables if Path(t.full_path).stem == input_table_name), None)
+                if table is None:
+                    raise UserException(f"Input table '{input_table_name}' not found in the storage mapping.")
+            else:
+                table = tables[0]
+
+            if table.columns:
+                return list(table.columns)
+
+            table_id = table.source
+
+        if not table_id:
+            # sync action — files not mounted, read table ID from raw storage config
+            raw_tables = self.configuration.config_data.get("storage", {}).get("input", {}).get("tables", [])
+            if not raw_tables:
+                raise UserException("No input table found. Add an input table in the storage settings first.")
+            table_id = raw_tables[0].get("source")
+
         token = self.environment_variables.token
         url = self.environment_variables.url
         if not token or not url:
             raise UserException("Storage API token not available. Ensure forward_token is enabled for this component.")
 
         resp = requests.get(
-            f"{url}/v2/storage/tables/{table.source}",
+            f"{url}/v2/storage/tables/{table_id}",
             headers={"X-StorageApi-Token": token},
             timeout=30,
         )
