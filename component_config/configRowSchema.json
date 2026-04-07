@@ -145,16 +145,30 @@
         }
       }
     },
-    "reload_columns": {
+    "load_column_mapping_btn": {
       "type": "button",
       "format": "sync-action",
-      "title": "Load Dimensions",
-      "description": "Fetches dimensions from the selected Essbase cube and populates Context Members with any dimensions not present in your input table columns.",
+      "title": "Load Column Mapping",
+      "description": "Pre-fills Column Mapping with all columns from the linked input table. Edit destinations to rename, or delete rows you don't need.",
       "propertyOrder": 3,
       "options": {
         "async": {
-          "label": "Load Dimensions",
-          "action": "listColumns",
+          "label": "Load Column Mapping",
+          "action": "loadColumnMapping",
+          "cache": false
+        }
+      }
+    },
+    "load_context_members_btn": {
+      "type": "button",
+      "format": "sync-action",
+      "title": "Load Context Members",
+      "description": "Fetches dimensions from the selected Essbase cube and populates Context Members with dimensions not present in your input table columns.",
+      "propertyOrder": 4,
+      "options": {
+        "async": {
+          "label": "Load Context Members",
+          "action": "loadContextMembers",
           "cache": false
         }
       }
