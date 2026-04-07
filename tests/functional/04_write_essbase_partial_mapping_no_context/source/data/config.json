@@ -13,9 +13,9 @@
       "input_table": "essbase_four_cols",
       "batch_size": 1000,
       "context_members": [
-        "West",
-        "Actual",
-        "Sales"
+        {"dimension": "Market", "member": "West"},
+        {"dimension": "Scenario", "member": "Actual"},
+        {"dimension": "Measures", "member": "Sales"}
       ],
       "column_mapping": [
         {

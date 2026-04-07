@@ -13,9 +13,18 @@
       "input_table": "essbase_three_rows",
       "batch_size": 1,
       "context_members": [
-        "East",
-        "Actual",
-        "Sales"
+        {
+          "dimension": "Market",
+          "member": "East"
+        },
+        {
+          "dimension": "Scenario",
+          "member": "Actual"
+        },
+        {
+          "dimension": "Measures",
+          "member": "Sales"
+        }
       ]
     },
     "destination": {

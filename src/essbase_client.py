@@ -94,6 +94,8 @@ class EssbaseClient:
             resp = self.session.post(url, json={}, verify=self.ssl_verify, timeout=60)
             resp.raise_for_status()
             return resp.json()["streamId"]
+        except requests.Timeout as e:
+            raise UserException(f"Essbase dataload: timed out starting stream for {path}: {e}") from e
         except (requests.HTTPError, requests.ConnectionError, KeyError) as e:
             raise UserException(f"Essbase dataload: failed to start stream for {path}: {e}") from e
 
@@ -104,6 +106,8 @@ class EssbaseClient:
                 url, data=data.encode(), headers={"Content-Type": "text/plain"}, verify=self.ssl_verify, timeout=300
             )
             resp.raise_for_status()
+        except requests.Timeout as e:
+            raise UserException(f"Essbase dataload: push timed out (read timeout=300s): {e}") from e
         except requests.HTTPError as e:
             raise UserException(f"Essbase dataload: push failed [{e.response.status_code}]: {e.response.text}") from e
         except requests.ConnectionError as e:
@@ -136,6 +140,8 @@ class EssbaseClient:
                 raise UserException(
                     f"Essbase dataload: finalize failed [{e.response.status_code}]: {e.response.text}"
                 ) from e
+            except requests.Timeout as e:
+                raise UserException(f"Essbase dataload: finalize timed out: {e}") from e
             except requests.ConnectionError as e:
                 raise UserException(f"Essbase dataload: finalize connection error: {e}") from e
         raise UserException(f"Essbase finalize {path} failed after {_RETRY_ATTEMPTS} attempts") from last_exc
@@ -164,6 +170,8 @@ class EssbaseClient:
                 raise UserException(
                     f"Essbase API error [{e.response.status_code}] on GET {path}: {e.response.text}"
                 ) from e
+            except requests.Timeout as e:
+                raise UserException(f"Essbase request timed out on GET {path}: {e}") from e
             except requests.ConnectionError as e:
                 raise UserException(f"Cannot connect to Essbase at {self.base_url}: {e}") from e
         raise UserException(f"Essbase GET {path} failed after {_RETRY_ATTEMPTS} attempts") from last_exc

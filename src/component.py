@@ -32,8 +32,14 @@ class Component(ComponentBase):
         self.params = Configuration(**self.configuration.parameters)
 
     def run(self):
-        if not self.params.destination or not self.params.destination.application or not self.params.destination.database:
-            raise UserException("Configuration error: 'destination.application' and 'destination.database' are required.")
+        if (
+            not self.params.destination
+            or not self.params.destination.application
+            or not self.params.destination.database
+        ):
+            raise UserException(
+                "Configuration error: 'destination.application' and 'destination.database' are required."
+            )
         if not self.params.source:
             raise UserException("Configuration error: 'source' is required for the run action.")
         logging.info("Processing: app=%s db=%s", self.params.destination.application, self.params.destination.database)
@@ -79,11 +85,12 @@ class Component(ComponentBase):
 
     @sync_action("listColumns")
     def list_columns(self) -> dict:
-        """Connect to Essbase and auto-populate column mapping with cube dimensions.
+        """Populate context members with Essbase dimensions not covered by CSV columns.
 
-        Fetches dimension names from the selected application/database and injects
-        them as destination entries in source.column_mapping, preserving any
-        existing source assignments.
+        Reads the linked input table's column names from _metadata_, fetches
+        dimension names from Essbase, then injects dimensions absent from the CSV
+        into source.context_members so the user can specify a fixed member value
+        for each. Existing context_member entries are preserved.
         """
         destination = self.configuration.parameters.get("destination", {})
         application = destination.get("application", "")
@@ -96,14 +103,16 @@ class Component(ComponentBase):
         if not dimensions:
             raise UserException(f"No dimensions found in {application}/{database}.")
 
-        current_source = self.configuration.parameters.get("source", {})
-        existing_by_dest = {m["destination"]: m for m in current_source.get("column_mapping", [])}
-        new_mapping = [
-            existing_by_dest.get(dim, {"source": "", "destination": dim})
-            for dim in dimensions
-        ]
+        csv_columns = set(self.configuration.parameters.get("_metadata_", {}).get("table", {}).get("columns", []))
+        unmatched = [dim for dim in dimensions if dim not in csv_columns]
 
-        return {"type": "data", "data": {"source": {**current_source, "column_mapping": new_mapping}}}
+        current_source = self.configuration.parameters.get("source", {})
+        existing_by_dim = {
+            cm["dimension"]: cm for cm in current_source.get("context_members", []) if isinstance(cm, dict)
+        }
+        new_context = [existing_by_dim.get(dim, {"dimension": dim, "member": ""}) for dim in unmatched]
+
+        return {"type": "data", "data": {"source": {**current_source, "context_members": new_context}}}
 
     @sync_action("testConnection")
     def test_connection(self) -> dict:
@@ -145,7 +154,7 @@ class Component(ComponentBase):
                 self.params.destination.database,
                 headers,
                 batch,
-                context_members=self.params.source.context_members,
+                context_members=[cm.member for cm in self.params.source.context_members if cm.member],
             )
             total += len(batch)
             logging.info(

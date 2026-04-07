@@ -1,7 +1,7 @@
 [
   {
     "name": "01_write_essbase_basic",
-    "description": "Basic write — 2 rows sent to Sample/Basic with context members",
+    "description": "Basic write \u2014 2 rows sent to Sample/Basic with context members",
     "config": {
       "action": "run",
       "parameters": {
@@ -16,7 +16,20 @@
         "source": {
           "input_table": "essbase_sample_basic",
           "batch_size": 1000,
-          "context_members": ["East", "Actual", "Sales"]
+          "context_members": [
+            {
+              "dimension": "Market",
+              "member": "East"
+            },
+            {
+              "dimension": "Scenario",
+              "member": "Actual"
+            },
+            {
+              "dimension": "Measures",
+              "member": "Sales"
+            }
+          ]
         },
         "destination": {
           "application": "Sample",
@@ -26,7 +39,10 @@
       "storage": {
         "input": {
           "tables": [
-            {"source": "essbase_sample_basic.csv", "destination": "essbase_sample_basic.csv"}
+            {
+              "source": "essbase_sample_basic.csv",
+              "destination": "essbase_sample_basic.csv"
+            }
           ]
         }
       }
@@ -34,7 +50,7 @@
   },
   {
     "name": "03_write_essbase_single_row",
-    "description": "Single-row input — verifies the component handles a 1-row CSV correctly",
+    "description": "Single-row input \u2014 verifies the component handles a 1-row CSV correctly",
     "config": {
       "action": "run",
       "parameters": {
@@ -49,7 +65,20 @@
         "source": {
           "input_table": "essbase_sample_basic_single",
           "batch_size": 1000,
-          "context_members": ["East", "Actual", "Sales"]
+          "context_members": [
+            {
+              "dimension": "Market",
+              "member": "East"
+            },
+            {
+              "dimension": "Scenario",
+              "member": "Actual"
+            },
+            {
+              "dimension": "Measures",
+              "member": "Sales"
+            }
+          ]
         },
         "destination": {
           "application": "Sample",
@@ -59,7 +88,10 @@
       "storage": {
         "input": {
           "tables": [
-            {"source": "essbase_sample_basic_single.csv", "destination": "essbase_sample_basic_single.csv"}
+            {
+              "source": "essbase_sample_basic_single.csv",
+              "destination": "essbase_sample_basic_single.csv"
+            }
           ]
         }
       }
@@ -67,7 +99,7 @@
   },
   {
     "name": "04_write_essbase_partial_mapping_no_context",
-    "description": "Partial column mapping combined with explicit context_members — tests the two features together",
+    "description": "Partial column mapping combined with explicit context_members \u2014 tests the two features together",
     "config": {
       "action": "run",
       "parameters": {
@@ -82,10 +114,29 @@
         "source": {
           "input_table": "essbase_four_cols",
           "batch_size": 1000,
-          "context_members": ["West", "Actual", "Sales"],
+          "context_members": [
+            {
+              "dimension": "Market",
+              "member": "West"
+            },
+            {
+              "dimension": "Scenario",
+              "member": "Actual"
+            },
+            {
+              "dimension": "Measures",
+              "member": "Sales"
+            }
+          ],
           "column_mapping": [
-            {"source": "Product", "destination": "Product"},
-            {"source": "Feb", "destination": "Feb"}
+            {
+              "source": "Product",
+              "destination": "Product"
+            },
+            {
+              "source": "Feb",
+              "destination": "Feb"
+            }
           ]
         },
         "destination": {
@@ -96,7 +147,10 @@
       "storage": {
         "input": {
           "tables": [
-            {"source": "essbase_four_cols.csv", "destination": "essbase_four_cols.csv"}
+            {
+              "source": "essbase_four_cols.csv",
+              "destination": "essbase_four_cols.csv"
+            }
           ]
         }
       }
@@ -104,7 +158,7 @@
   },
   {
     "name": "05_write_essbase_batched",
-    "description": "batch_size=1 with 3 rows — each row is a separate API call (3 stream open/push/close cycles)",
+    "description": "batch_size=1 with 3 rows \u2014 each row is a separate API call (3 stream open/push/close cycles)",
     "config": {
       "action": "run",
       "parameters": {
@@ -119,7 +173,20 @@
         "source": {
           "input_table": "essbase_three_rows",
           "batch_size": 1,
-          "context_members": ["East", "Actual", "Sales"]
+          "context_members": [
+            {
+              "dimension": "Market",
+              "member": "East"
+            },
+            {
+              "dimension": "Scenario",
+              "member": "Actual"
+            },
+            {
+              "dimension": "Measures",
+              "member": "Sales"
+            }
+          ]
         },
         "destination": {
           "application": "Sample",
@@ -129,7 +196,10 @@
       "storage": {
         "input": {
           "tables": [
-            {"source": "essbase_three_rows.csv", "destination": "essbase_three_rows.csv"}
+            {
+              "source": "essbase_three_rows.csv",
+              "destination": "essbase_three_rows.csv"
+            }
           ]
         }
       }
@@ -137,7 +207,7 @@
   },
   {
     "name": "07_write_essbase_partial_mapping",
-    "description": "column_mapping selects 2 of 4 columns — Feb and Mar are dropped before sending to Essbase",
+    "description": "column_mapping selects 2 of 4 columns \u2014 Feb and Mar are dropped before sending to Essbase",
     "config": {
       "action": "run",
       "parameters": {
@@ -152,10 +222,29 @@
         "source": {
           "input_table": "essbase_four_cols",
           "batch_size": 1000,
-          "context_members": ["East", "Actual", "Sales"],
+          "context_members": [
+            {
+              "dimension": "Market",
+              "member": "East"
+            },
+            {
+              "dimension": "Scenario",
+              "member": "Actual"
+            },
+            {
+              "dimension": "Measures",
+              "member": "Sales"
+            }
+          ],
           "column_mapping": [
-            {"source": "Product", "destination": "Product"},
-            {"source": "Jan", "destination": "Jan"}
+            {
+              "source": "Product",
+              "destination": "Product"
+            },
+            {
+              "source": "Jan",
+              "destination": "Jan"
+            }
           ]
         },
         "destination": {
@@ -166,7 +255,10 @@
       "storage": {
         "input": {
           "tables": [
-            {"source": "essbase_four_cols.csv", "destination": "essbase_four_cols.csv"}
+            {
+              "source": "essbase_four_cols.csv",
+              "destination": "essbase_four_cols.csv"
+            }
           ]
         }
       }
@@ -174,7 +266,7 @@
   },
   {
     "name": "08_write_essbase_empty_table",
-    "description": "Input CSV has headers but zero data rows — component logs a warning and makes no API calls",
+    "description": "Input CSV has headers but zero data rows \u2014 component logs a warning and makes no API calls",
     "config": {
       "action": "run",
       "parameters": {
@@ -189,7 +281,20 @@
         "source": {
           "input_table": "essbase_empty",
           "batch_size": 1000,
-          "context_members": ["East", "Actual", "Sales"]
+          "context_members": [
+            {
+              "dimension": "Market",
+              "member": "East"
+            },
+            {
+              "dimension": "Scenario",
+              "member": "Actual"
+            },
+            {
+              "dimension": "Measures",
+              "member": "Sales"
+            }
+          ]
         },
         "destination": {
           "application": "Sample",
@@ -199,7 +304,10 @@
       "storage": {
         "input": {
           "tables": [
-            {"source": "essbase_empty.csv", "destination": "essbase_empty.csv"}
+            {
+              "source": "essbase_empty.csv",
+              "destination": "essbase_empty.csv"
+            }
           ]
         }
       }
@@ -207,7 +315,7 @@
   },
   {
     "name": "09_write_essbase_full_mapping",
-    "description": "column_mapping covers all 4 CSV columns and renames the period columns to valid later-period Essbase members — verifies rename logic end-to-end",
+    "description": "column_mapping covers all 4 CSV columns and renames the period columns to valid later-period Essbase members \u2014 verifies rename logic end-to-end",
     "config": {
       "action": "run",
       "parameters": {
@@ -222,12 +330,37 @@
         "source": {
           "input_table": "essbase_four_cols",
           "batch_size": 1000,
-          "context_members": ["East", "Actual", "Sales"],
+          "context_members": [
+            {
+              "dimension": "Market",
+              "member": "East"
+            },
+            {
+              "dimension": "Scenario",
+              "member": "Actual"
+            },
+            {
+              "dimension": "Measures",
+              "member": "Sales"
+            }
+          ],
           "column_mapping": [
-            {"source": "Product", "destination": "Product"},
-            {"source": "Jan", "destination": "Feb"},
-            {"source": "Feb", "destination": "Mar"},
-            {"source": "Mar", "destination": "Apr"}
+            {
+              "source": "Product",
+              "destination": "Product"
+            },
+            {
+              "source": "Jan",
+              "destination": "Feb"
+            },
+            {
+              "source": "Feb",
+              "destination": "Mar"
+            },
+            {
+              "source": "Mar",
+              "destination": "Apr"
+            }
           ]
         },
         "destination": {
@@ -238,7 +371,10 @@
       "storage": {
         "input": {
           "tables": [
-            {"source": "essbase_four_cols.csv", "destination": "essbase_four_cols.csv"}
+            {
+              "source": "essbase_four_cols.csv",
+              "destination": "essbase_four_cols.csv"
+            }
           ]
         }
       }
@@ -246,7 +382,7 @@
   },
   {
     "name": "10_write_essbase_no_mapping",
-    "description": "Empty column_mapping — all 4 columns pass through unchanged (no filtering or renaming)",
+    "description": "Empty column_mapping \u2014 all 4 columns pass through unchanged (no filtering or renaming)",
     "config": {
       "action": "run",
       "parameters": {
@@ -261,7 +397,20 @@
         "source": {
           "input_table": "essbase_four_cols",
           "batch_size": 1000,
-          "context_members": ["East", "Actual", "Sales"],
+          "context_members": [
+            {
+              "dimension": "Market",
+              "member": "East"
+            },
+            {
+              "dimension": "Scenario",
+              "member": "Actual"
+            },
+            {
+              "dimension": "Measures",
+              "member": "Sales"
+            }
+          ],
           "column_mapping": []
         },
         "destination": {
@@ -272,7 +421,10 @@
       "storage": {
         "input": {
           "tables": [
-            {"source": "essbase_four_cols.csv", "destination": "essbase_four_cols.csv"}
+            {
+              "source": "essbase_four_cols.csv",
+              "destination": "essbase_four_cols.csv"
+            }
           ]
         }
       }

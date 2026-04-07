@@ -14,6 +14,15 @@ class ColumnMapping(BaseModel):
     required: bool | None = Field(default=None)
 
 
+class ContextMember(BaseModel):
+    """A fixed member value for an Essbase dimension not covered by CSV columns."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    dimension: str
+    member: str = ""
+
+
 class SourceConfig(BaseModel):
     """Row-level source parameters — maps to the 'source' block in configRowSchema."""
 
@@ -21,7 +30,7 @@ class SourceConfig(BaseModel):
 
     input_table: str = ""
     batch_size: int = Field(default=1000, ge=1)
-    context_members: list[str] = Field(default_factory=list)
+    context_members: list[ContextMember] = Field(default_factory=list)
     column_mapping: list[ColumnMapping] = Field(default_factory=list)
 
 
