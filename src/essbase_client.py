@@ -74,7 +74,10 @@ class EssbaseClient:
         try:
             self._push_data(f"{path}/{stream_id}", data_text)
         except Exception:
-            self._end_stream(f"{path}/{stream_id}", expect_success=False)
+            try:
+                self._end_stream(f"{path}/{stream_id}", expect_success=False)
+            except Exception as cleanup_exc:
+                logging.warning("Failed to close Essbase stream after push error: %s", cleanup_exc)
             raise
         return self._end_stream(f"{path}/{stream_id}")
 
@@ -82,11 +85,16 @@ class EssbaseClient:
     def _quote(member: str) -> str:
         return f'"{member}"' if " " in member else member
 
-    def _build_bso_data(self, headers: list[str], rows: list[list], context_members: list[str]) -> str:
-        lines = [self._quote(m) for m in context_members]
-        lines.append(" ".join(self._quote(h) for h in headers[1:]))
+    @staticmethod
+    def _build_bso_data(headers: list[str], rows: list[list], context_members: list[str]) -> str:
+        if not headers:
+            raise UserException("Cannot load data: input table has no columns.")
+        lines = [EssbaseClient._quote(m) for m in context_members]
+        lines.append(" ".join(EssbaseClient._quote(h) for h in headers[1:]))
         for row in rows:
-            lines.append(self._quote(str(row[0])) + " " + " ".join(self._quote(str(v)) for v in row[1:]))
+            lines.append(
+                EssbaseClient._quote(str(row[0])) + " " + " ".join(EssbaseClient._quote(str(v)) for v in row[1:])
+            )
         return "\n".join(lines) + "\n"
 
     def _start_stream(self, path: str) -> str:

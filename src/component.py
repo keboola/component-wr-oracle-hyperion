@@ -7,7 +7,7 @@ Essbase (21C REST API) via the dataload streaming endpoint.
 
 import csv
 import logging
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from itertools import islice
 from pathlib import Path
 
@@ -20,7 +20,7 @@ from configuration import ColumnMapping, Configuration
 from essbase_client import EssbaseClient
 
 
-def _batched(iterable, size: int):
+def _batched[T](iterable: Iterable[T], size: int) -> Iterator[list[T]]:
     """Yield successive lists of at most `size` items from iterable."""
     it = iter(iterable)
     while batch := list(islice(it, size)):
@@ -31,8 +31,12 @@ class Component(ComponentBase):
     def __init__(self):
         super().__init__()
         self.params = Configuration(**self.configuration.parameters)
+        try:
+            self.client = self._build_essbase_client()
+        except UserException:
+            self.client = None
 
-    def run(self):
+    def run(self) -> None:
         if (
             not self.params.destination
             or not self.params.destination.application
@@ -43,67 +47,56 @@ class Component(ComponentBase):
             )
         if not self.params.source:
             raise UserException("Configuration error: 'source' is required for the run action.")
+        if not self.client:
+            self.client = self._build_essbase_client()
         logging.info("Processing: app=%s db=%s", self.params.destination.application, self.params.destination.database)
-        client = self._build_essbase_client()
-        version = client.verify_connection()
+        version = self.client.verify_connection()
         logging.info("Connected to Essbase version: %s", version)
-        self._write_essbase(client)
+        self._write_essbase(self.client)
 
     @sync_action("listApplications")
     def list_applications(self) -> list[SelectElement]:
         """Return all Essbase applications for the destination dropdown."""
-        client = self._build_essbase_client()
-        apps = client.get_applications()
+        if not self.client:
+            self.client = self._build_essbase_client()
+        apps = self.client.get_applications()
         return [SelectElement(value=app["name"], label=app.get("alias") or app["name"]) for app in apps]
 
     @sync_action("listDatabases")
     def list_databases(self) -> list[SelectElement]:
         """Return databases for the selected application."""
-        destination = self.configuration.parameters.get("destination", {})
-        application = destination.get("application", "")
+        application = self.params.destination.application if self.params.destination else ""
         if not application:
             raise UserException("Select or enter an Application name first, then reload databases.")
-        client = self._build_essbase_client()
-        databases = client.get_databases(application)
+        if not self.client:
+            self.client = self._build_essbase_client()
+        databases = self.client.get_databases(application)
         return [SelectElement(value=db["name"], label=db.get("alias") or db["name"]) for db in databases]
-
-    @sync_action("listMembers")
-    def list_members(self) -> list[SelectElement]:
-        """Return top-level members from all dimensions for the context members dropdown."""
-        destination = self.configuration.parameters.get("destination", {})
-        application = destination.get("application", "")
-        database = destination.get("database", "")
-        if not application or not database:
-            raise UserException("Select an Application and Database/Cube first.")
-        client = self._build_essbase_client()
-        dimensions = client.get_dimensions(application, database)
-        elements = []
-        for dim in dimensions:
-            members = client.get_top_level_members(application, database, dim)
-            for member in members:
-                elements.append(SelectElement(value=member, label=f"{member} ({dim})"))
-        return elements
 
     @sync_action("loadColumnMapping")
     def load_column_mapping(self) -> dict:
         """Pre-fill column mapping rows from the linked input table's Storage columns."""
         csv_columns = self._get_input_table_columns()
-        current_source = self.configuration.parameters.get("source", {})
-        existing_by_source = {m["source"]: m for m in current_source.get("column_mapping", []) if isinstance(m, dict)}
+        source = self.params.source
+        existing_by_source = {
+            cm.source: {"source": cm.source, "destination": cm.destination}
+            for cm in (source.column_mapping if source else [])
+        }
         new_mapping = [existing_by_source.get(col, {"source": col, "destination": col}) for col in csv_columns]
-        return {"type": "data", "data": {"source": {**current_source, "column_mapping": new_mapping}}}
+        source_dict = source.model_dump() if source else {}
+        return {"type": "data", "data": {"source": {**source_dict, "column_mapping": new_mapping}}}
 
     @sync_action("loadContextMembers")
     def load_context_members(self) -> dict:
         """Populate context members with base Essbase dimensions not covered by input table columns."""
-        destination = self.configuration.parameters.get("destination", {})
-        application = destination.get("application", "")
-        database = destination.get("database", "")
+        application = self.params.destination.application if self.params.destination else ""
+        database = self.params.destination.database if self.params.destination else ""
         if not application or not database:
             raise UserException("Select an Application and Database/Cube first.")
 
-        client = self._build_essbase_client()
-        dimensions = client.get_dimensions(application, database)
+        if not self.client:
+            self.client = self._build_essbase_client()
+        dimensions = self.client.get_dimensions(application, database)
         if not dimensions:
             raise UserException(f"No dimensions found in {application}/{database}.")
 
@@ -113,12 +106,14 @@ class Component(ComponentBase):
             csv_columns = set()
         unmatched = [dim for dim in dimensions if dim not in csv_columns]
 
-        current_source = self.configuration.parameters.get("source", {})
+        source = self.params.source
         existing_by_dim = {
-            cm["dimension"]: cm for cm in current_source.get("context_members", []) if isinstance(cm, dict)
+            cm.dimension: {"dimension": cm.dimension, "member": cm.member}
+            for cm in (source.context_members if source else [])
         }
         new_context = [existing_by_dim.get(dim, {"dimension": dim, "member": ""}) for dim in unmatched]
-        return {"type": "data", "data": {"source": {**current_source, "context_members": new_context}}}
+        source_dict = source.model_dump() if source else {}
+        return {"type": "data", "data": {"source": {**source_dict, "context_members": new_context}}}
 
     def _get_input_table_columns(self) -> list[str]:
         """Return column names for the configured input table.
@@ -129,7 +124,7 @@ class Component(ComponentBase):
         3. Storage API using the table source from the raw storage config
            (fallback for sync actions where files are not mounted)
         """
-        input_table_name = self.configuration.parameters.get("source", {}).get("input_table", "")
+        input_table_name = self.params.source.input_table if self.params.source else ""
         tables = self.configuration.tables_input_mapping
 
         table_id: str | None = None
@@ -159,22 +154,25 @@ class Component(ComponentBase):
         if not token or not url:
             raise UserException("Storage API token not available. Ensure forward_token is enabled for this component.")
 
-        resp = requests.get(
-            f"{url}/v2/storage/tables/{table_id}",
-            headers={"X-StorageApi-Token": token},
-            timeout=30,
-        )
         try:
+            resp = requests.get(
+                f"{url}/v2/storage/tables/{table_id}",
+                headers={"X-StorageApi-Token": token},
+                timeout=30,
+            )
             resp.raise_for_status()
         except requests.HTTPError as e:
             raise UserException(f"Storage API error fetching table columns: {e}") from e
+        except (requests.Timeout, requests.ConnectionError) as e:
+            raise UserException(f"Storage API connection error fetching table columns: {e}") from e
         return resp.json().get("columns", [])
 
     @sync_action("testConnection")
     def test_connection(self) -> dict:
         """Sync action: verify Essbase connectivity and return version."""
-        client = self._build_essbase_client()
-        version = client.verify_connection()
+        if not self.client:
+            self.client = self._build_essbase_client()
+        version = self.client.verify_connection()
         return {"status": "success", "message": f"Connected to Essbase {version}"}
 
     def _build_essbase_client(self) -> EssbaseClient:
@@ -237,6 +235,11 @@ class Component(ComponentBase):
         col_map = {cm.source: cm.destination for cm in mapping}
         mapped = [(i, col_map[h]) for i, h in enumerate(headers) if h in col_map]
         if not mapped:
+            logging.warning(
+                "Column mapping is configured but no source columns matched. "
+                "All %d original columns will pass through unchanged.",
+                len(headers),
+            )
             return headers, rows
         new_headers = [dest for _, dest in mapped]
         indices = [i for i, _ in mapped]

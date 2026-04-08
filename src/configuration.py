@@ -71,7 +71,7 @@ class Configuration(BaseModel):
             super().__init__(**data)
         except ValidationError as e:
             error_messages = [f"{'.'.join(str(loc) for loc in err['loc'])}: {err['msg']}" for err in e.errors()]
-            raise UserException(f"Configuration error: {', '.join(error_messages)}")
+            raise UserException(f"Configuration error: {', '.join(error_messages)}") from e
 
     def get_essbase_host(self) -> str:
         """Return Essbase host — falls back to the host from hyperion_url if essbase_host is not set."""

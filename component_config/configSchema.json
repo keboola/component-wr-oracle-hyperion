@@ -49,6 +49,7 @@
         },
         "test_connection": {
           "type": "button",
+          "title": "Test Connection",
           "format": "test-connection",
           "propertyOrder": 6,
           "options": {
@@ -76,7 +77,10 @@
           "default": true,
           "propertyOrder": 8,
           "options": {
-            "grid_columns": 6
+            "grid_columns": 6,
+            "dependencies": {
+              "use_ssl": true
+            }
           }
         }
       }

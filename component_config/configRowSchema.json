@@ -39,7 +39,6 @@
           "description": "Essbase application name",
           "format": "select",
           "enum": [],
-          "required": true,
           "propertyOrder": 1,
           "options": {
             "async": {
