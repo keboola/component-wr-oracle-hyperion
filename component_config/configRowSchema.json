@@ -24,6 +24,9 @@
               "type": "array"
             }
           }
+        },
+        "essbase_members": {
+          "type": "array"
         }
       }
     },
@@ -86,19 +89,29 @@
               "source": {
                 "type": "string",
                 "title": "Source Column",
-                "watch": {
-                  "columns": "_metadata_.table.columns"
-                },
-                "enumSource": "columns",
                 "propertyOrder": 1,
                 "options": {
-                  "creatable": true
+                  "readOnly": true
                 }
               },
               "destination": {
                 "type": "string",
                 "title": "Essbase Member / Dimension Name",
-                "propertyOrder": 2
+                "format": "select",
+                "propertyOrder": 2,
+                "watch": {
+                  "members": "_metadata_.essbase_members"
+                },
+                "enumSource": [
+                  {
+                    "source": "members",
+                    "value": "{{item.value}}",
+                    "title": "{{item.label}}"
+                  }
+                ],
+                "options": {
+                  "tags": true
+                }
               }
             }
           }

@@ -108,17 +108,24 @@ class TestListDatabases(unittest.TestCase):
 
 
 class TestLoadColumnMapping(unittest.TestCase):
-    def test_populates_mapping_from_storage_api(self):
+    def test_populates_mapping_with_fuzzy_matched_members(self):
         comp = _make_component(
             {
                 "connection": _CONN,
+                "destination": {"application": "Sample", "database": "Basic"},
                 "source": {"input_table": "", "batch_size": 1000, "column_mapping": []},
             },
             storage={"input": {"tables": [{"source": "in.c-main.products"}]}},
         )
+        comp.client.get_dimensions.return_value = ["Product", "Year"]
+        comp.client.get_dimension_members_mdx.side_effect = lambda app, db, dim: {
+            "Product": ["Cola", "Root Beer"],
+            "Year": ["Jan", "Feb", "Mar"],
+        }[dim]
+
         with patch("requests.get") as mock_get:
             mock_resp = MagicMock()
-            mock_resp.json.return_value = {"columns": ["Product", "Jan", "Feb"]}
+            mock_resp.json.return_value = {"columns": ["Product", "jan", "sales"]}
             mock_resp.raise_for_status = MagicMock()
             mock_get.return_value = mock_resp
 
@@ -126,12 +133,24 @@ class TestLoadColumnMapping(unittest.TestCase):
 
         mapping = result["data"]["source"]["column_mapping"]
         self.assertEqual(len(mapping), 3)
+        # "Product" matches dimension name
         self.assertEqual(mapping[0], {"source": "Product", "destination": "Product"})
+        # "jan" fuzzy-matches member "Jan"
+        self.assertEqual(mapping[1], {"source": "jan", "destination": "Jan"})
+        # "sales" has no match
+        self.assertEqual(mapping[2], {"source": "sales", "destination": ""})
+        # Verify members in _metadata_
+        members = result["data"]["_metadata_"]["essbase_members"]
+        values = [m["value"] for m in members]
+        self.assertIn("Cola", values)
+        self.assertIn("Jan", values)
+        self.assertIn("Product", values)
 
     def test_preserves_existing_mapping(self):
         comp = _make_component(
             {
                 "connection": _CONN,
+                "destination": {"application": "Sample", "database": "Basic"},
                 "source": {
                     "input_table": "",
                     "batch_size": 1000,
@@ -140,9 +159,12 @@ class TestLoadColumnMapping(unittest.TestCase):
             },
             storage={"input": {"tables": [{"source": "in.c-main.products"}]}},
         )
+        comp.client.get_dimensions.return_value = ["Product"]
+        comp.client.get_dimension_members_mdx.return_value = ["Cola"]
+
         with patch("requests.get") as mock_get:
             mock_resp = MagicMock()
-            mock_resp.json.return_value = {"columns": ["Product", "Jan"]}
+            mock_resp.json.return_value = {"columns": ["Product", "Xyz"]}
             mock_resp.raise_for_status = MagicMock()
             mock_get.return_value = mock_resp
 
@@ -150,7 +172,7 @@ class TestLoadColumnMapping(unittest.TestCase):
 
         mapping = result["data"]["source"]["column_mapping"]
         self.assertEqual(mapping[0], {"source": "Product", "destination": "ProductDim"})
-        self.assertEqual(mapping[1], {"source": "Jan", "destination": "Jan"})
+        self.assertEqual(mapping[1], {"source": "Xyz", "destination": ""})
 
 
 class TestLoadContextMembers(unittest.TestCase):

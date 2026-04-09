@@ -48,6 +48,20 @@ class EssbaseClient:
         children = data.get("children", []) or data.get("items", [])
         return [m["name"] for m in children if m.get("name")]
 
+    def get_dimension_members_mdx(self, application: str, database: str, dimension: str) -> list[str]:
+        """Return all descendants of a dimension via MDX (single API call)."""
+        path = f"/applications/{application}/databases/{database}/mdx"
+        body = {
+            "query": f"SELECT {{Descendants([{dimension}])}} ON COLUMNS",
+            "preferences": {"dataless": True, "memberIdentifierType": "NAME"},
+        }
+        data = self._post_json(path, body)
+        rows = data.get("data", [])
+        # First (and only) row contains all member names as column values
+        members = rows[0] if rows else []
+        # Skip the root member (first element = dimension name itself)
+        return [m for m in members[1:] if m]
+
     def import_data_slice(
         self,
         application: str,
@@ -184,6 +198,21 @@ class EssbaseClient:
             except requests.ConnectionError as e:
                 raise UserException(f"Cannot connect to Essbase at {self.base_url}: {e}") from e
         raise UserException(f"Essbase GET {path} failed after {_RETRY_ATTEMPTS} attempts") from last_exc
+
+    def _post_json(self, path: str, body: dict) -> Any:
+        url = f"{self.base_url}{path}"
+        try:
+            resp = self.session.post(url, json=body, verify=self.ssl_verify, timeout=300)
+            resp.raise_for_status()
+            return resp.json()
+        except requests.HTTPError as e:
+            raise UserException(
+                f"Essbase API error [{e.response.status_code}] on POST {path}: {e.response.text}"
+            ) from e
+        except requests.Timeout as e:
+            raise UserException(f"Essbase request timed out on POST {path}: {e}") from e
+        except requests.ConnectionError as e:
+            raise UserException(f"Cannot connect to Essbase at {self.base_url}: {e}") from e
 
     @staticmethod
     def _is_retryable(e: requests.HTTPError) -> bool:

@@ -73,18 +73,81 @@ class Component(ComponentBase):
         databases = self.client.get_databases(application)
         return [SelectElement(value=db["name"], label=db.get("alias") or db["name"]) for db in databases]
 
+    @staticmethod
+    def _normalize(name: str) -> str:
+        """Normalize a name for fuzzy matching: strip separators and lowercase."""
+        return name.replace("_", "").replace("-", "").replace(" ", "").replace(".", "").lower()
+
+    @classmethod
+    def _fuzzy_match(cls, value: str, candidates: set[str]) -> str:
+        """Return the best matching candidate for value, or '' if none found.
+
+        Priority:
+        1. Exact match
+        2. Case-insensitive match
+        3. Normalized match (remove _, -, spaces, dots then lowercase)
+        """
+        if value in candidates:
+            return value
+        value_lower = value.lower()
+        for candidate in candidates:
+            if candidate.lower() == value_lower:
+                return candidate
+        value_norm = cls._normalize(value)
+        for candidate in candidates:
+            if cls._normalize(candidate) == value_norm:
+                return candidate
+        return ""
+
     @sync_action("loadColumnMapping")
     def load_column_mapping(self) -> dict:
-        """Pre-fill column mapping rows from the linked input table's Storage columns."""
+        """Pre-fill column mapping with fuzzy-matched Essbase members via MDX."""
+        application = self.params.destination.application if self.params.destination else ""
+        database = self.params.destination.database if self.params.destination else ""
+        if not application or not database:
+            raise UserException("Select an Application and Database/Cube first.")
+
+        if not self.client:
+            self.client = self._build_essbase_client()
+
         csv_columns = self._get_input_table_columns()
+        dimensions = self.client.get_dimensions(application, database)
+
+        # Fetch all members for each dimension via MDX
+        all_members: list[dict] = []
+        all_member_names: set[str] = set()
+        for dim in dimensions:
+            try:
+                members = self.client.get_dimension_members_mdx(application, database, dim)
+            except UserException:
+                members = []
+            for m in members:
+                all_members.append({"value": m, "label": f"{dim}: {m}"})
+                all_member_names.add(m)
+        # Also include dimension names as valid targets
+        for dim in dimensions:
+            all_members.append({"value": dim, "label": dim})
+            all_member_names.add(dim)
+
         source = self.params.source
-        existing_by_source = {
-            cm.source: {"source": cm.source, "destination": cm.destination}
-            for cm in (source.column_mapping if source else [])
-        }
-        new_mapping = [existing_by_source.get(col, {"source": col, "destination": col}) for col in csv_columns]
+        existing_by_source = {cm.source: cm.destination for cm in (source.column_mapping if source else [])}
+
+        new_mapping = []
+        for col in csv_columns:
+            if col in existing_by_source:
+                destination = existing_by_source[col]
+            else:
+                destination = self._fuzzy_match(col, all_member_names)
+            new_mapping.append({"source": col, "destination": destination})
+
         source_dict = source.model_dump() if source else {}
-        return {"type": "data", "data": {"source": {**source_dict, "column_mapping": new_mapping}}}
+        return {
+            "type": "data",
+            "data": {
+                "source": {**source_dict, "column_mapping": new_mapping},
+                "_metadata_": {"essbase_members": all_members},
+            },
+        }
 
     @sync_action("loadContextMembers")
     def load_context_members(self) -> dict:
