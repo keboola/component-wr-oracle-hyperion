@@ -1,0 +1,189 @@
+{
+  "type": "object",
+  "title": "Write Configuration",
+  "properties": {
+    "_metadata_": {
+      "type": "object",
+      "options": {
+        "hidden": true
+      },
+      "properties": {
+        "table": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "columns": {
+              "type": "array"
+            },
+            "primaryKey": {
+              "type": "array"
+            }
+          }
+        },
+        "essbase_members": {
+          "type": "array"
+        }
+      }
+    },
+    "destination": {
+      "type": "object",
+      "title": "Destination",
+      "format": "collapse",
+      "propertyOrder": 1,
+      "properties": {
+        "application": {
+          "type": "string",
+          "title": "Application",
+          "description": "Essbase application name",
+          "format": "select",
+          "enum": [],
+          "propertyOrder": 1,
+          "options": {
+            "async": {
+              "label": "Load Applications",
+              "action": "listApplications",
+              "autoload": true
+            }
+          }
+        },
+        "database": {
+          "type": "string",
+          "title": "Database / Cube",
+          "description": "Essbase database (cube) name",
+          "format": "select",
+          "enum": [],
+          "required": true,
+          "propertyOrder": 2,
+          "options": {
+            "async": {
+              "label": "Load Databases",
+              "action": "listDatabases"
+            }
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "title": "Source",
+      "format": "collapse",
+      "propertyOrder": 2,
+      "properties": {
+        "column_mapping": {
+          "title": "Column Mapping",
+          "description": "Maps input table columns to Essbase member/dimension names. Only mapped columns are written. Leave empty to pass all columns through unchanged.",
+          "type": "array",
+          "format": "table",
+          "propertyOrder": 1,
+          "default": [],
+          "items": {
+            "type": "object",
+            "required": ["source", "destination"],
+            "title": "Column",
+            "properties": {
+              "source": {
+                "type": "string",
+                "title": "Source Column",
+                "propertyOrder": 1,
+                "options": {
+                  "readOnly": true
+                }
+              },
+              "destination": {
+                "type": "string",
+                "title": "Essbase Member / Dimension Name",
+                "format": "select",
+                "propertyOrder": 2,
+                "watch": {
+                  "members": "_metadata_.essbase_members"
+                },
+                "enumSource": [
+                  {
+                    "source": "members",
+                    "value": "{{item.value}}",
+                    "title": "{{item.label}}"
+                  }
+                ],
+                "options": {
+                  "tags": true
+                }
+              }
+            }
+          }
+        },
+        "context_members": {
+          "type": "array",
+          "title": "Context Members",
+          "description": "Essbase dimensions not covered by your input table columns. Click 'Load Dimensions' to auto-populate from the cube, then enter the fixed member value for each dimension (e.g. 'East' for Market, 'Actual' for Scenario).",
+          "format": "table",
+          "propertyOrder": 2,
+          "default": [],
+          "items": {
+            "type": "object",
+            "title": "Context Member",
+            "required": ["dimension", "member"],
+            "properties": {
+              "dimension": {
+                "type": "string",
+                "title": "Dimension",
+                "propertyOrder": 1,
+                "options": {
+                  "grid_columns": 6
+                }
+              },
+              "member": {
+                "type": "string",
+                "title": "Member Value",
+                "propertyOrder": 2,
+                "options": {
+                  "grid_columns": 6
+                }
+              }
+            }
+          }
+        },
+        "batch_size": {
+          "type": "integer",
+          "title": "Batch Size",
+          "description": "Number of rows to send per API call.",
+          "default": 1000,
+          "minimum": 1,
+          "propertyOrder": 3
+        }
+      }
+    },
+    "load_column_mapping_btn": {
+      "type": "button",
+      "format": "sync-action",
+      "title": "Load Column Mapping",
+      "description": "Pre-fills Column Mapping with all columns from the linked input table. Edit destinations to rename, or delete rows you don't need.",
+      "propertyOrder": 3,
+      "options": {
+        "async": {
+          "label": "Load Column Mapping",
+          "action": "loadColumnMapping",
+          "cache": false
+        }
+      }
+    },
+    "load_context_members_btn": {
+      "type": "button",
+      "format": "sync-action",
+      "title": "Load Context Members",
+      "description": "Loads base Essbase dimensions not covered by your input table columns. Fill in a fixed member value for each.",
+      "propertyOrder": 4,
+      "options": {
+        "async": {
+          "label": "Load Context Members",
+          "action": "loadContextMembers",
+          "cache": false
+        }
+      }
+    }
+  }
+}

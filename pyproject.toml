@@ -1,0 +1,25 @@
+[project]
+name = "wr-oracle-hyperion"
+dynamic = ["version"]
+readme = "README.md"
+requires-python = "~=3.13.0"
+dependencies = [
+    "keboola-component>=1.9.0",
+    "keboola-utils>=1.1.0",
+    "pydantic>=2.11.7",
+    "requests>=2.32.0",
+]
+
+[dependency-groups]
+dev = [
+    "keboola.datadirtest>=2.0.0",
+    "pytest>=9.0.2",
+    "ruff>=0.15.2",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+extend-select = ["I", "UP"]
