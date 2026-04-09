@@ -28,7 +28,7 @@ jobs:
 
       - name: Get push event info
         id: info
-        uses: keboola/component-ci/actions/push-event-info@master
+        uses: keboola/component-ci/actions/push-event-info@feature/source-image-input
 
   build-test:
     name: Build Test Image
@@ -39,7 +39,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build test image
-        uses: keboola/component-ci/actions/docker-build@master
+        uses: keboola/component-ci/actions/docker-build@feature/source-image-input
         with:
           app_id: ${{ env.KBC_DEVELOPERPORTAL_APP }}-test
           build_target: test
@@ -52,12 +52,12 @@ jobs:
       - build-test
     steps:
       - name: Load test image
-        uses: keboola/component-ci/actions/docker-load@master
+        uses: keboola/component-ci/actions/docker-load@feature/source-image-input
         with:
           app_id: ${{ env.KBC_DEVELOPERPORTAL_APP }}-test
 
       - name: Run tests
-        uses: keboola/component-ci/actions/run-tests@master
+        uses: keboola/component-ci/actions/run-tests@feature/source-image-input
         with:
           app_id: ${{ env.KBC_DEVELOPERPORTAL_APP }}-test
           test_command: ""
@@ -70,7 +70,7 @@ jobs:
       - build-test
     steps:
       - name: Run KBC tests
-        uses: keboola/component-ci/actions/kbc-tests@master
+        uses: keboola/component-ci/actions/kbc-tests@feature/source-image-input
         with:
           app_id: ${{ env.KBC_DEVELOPERPORTAL_APP }}
           image_tag: ${{ needs.push_event_info.outputs.app_image_tag }}
@@ -89,7 +89,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build production image
-        uses: keboola/component-ci/actions/docker-build@master
+        uses: keboola/component-ci/actions/docker-build@feature/source-image-input
         with:
           app_id: ${{ env.KBC_DEVELOPERPORTAL_APP }}
           build_target: production
@@ -102,12 +102,12 @@ jobs:
       - build-production
     steps:
       - name: Load production image
-        uses: keboola/component-ci/actions/docker-load@master
+        uses: keboola/component-ci/actions/docker-load@feature/source-image-input
         with:
           app_id: ${{ env.KBC_DEVELOPERPORTAL_APP }}
 
       - name: Push to ECR
-        uses: keboola/component-ci/actions/push-to-ecr@master
+        uses: keboola/component-ci/actions/push-to-ecr@feature/source-image-input
         with:
           app_id: ${{ env.KBC_DEVELOPERPORTAL_APP }}
           vendor: ${{ env.KBC_DEVELOPERPORTAL_VENDOR }}
@@ -127,7 +127,7 @@ jobs:
     if: needs.push_event_info.outputs.is_deploy_ready == 'true'
     steps:
       - name: Deploy
-        uses: keboola/component-ci/actions/deploy@master
+        uses: keboola/component-ci/actions/deploy@feature/source-image-input
         with:
           app_id: ${{ env.KBC_DEVELOPERPORTAL_APP }}
           vendor: ${{ env.KBC_DEVELOPERPORTAL_VENDOR }}
@@ -147,7 +147,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Update properties
-        uses: keboola/component-ci/actions/update-properties@master
+        uses: keboola/component-ci/actions/update-properties@feature/source-image-input
         with:
           app_id: ${{ env.KBC_DEVELOPERPORTAL_APP }}
           vendor: ${{ env.KBC_DEVELOPERPORTAL_VENDOR }}
