@@ -1,1 +1,1 @@
-https://github.com/keboola/wr-oracle-hyperion/blob/main/LICENSE.md
+https://github.com/keboola/component-wr-oracle-hyperion/blob/main/LICENSE.md
