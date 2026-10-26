@@ -1,1 +1,1 @@
-https://github.com/keboola/wr-oracle-hyperion
+https://github.com/keboola/component-wr-oracle-hyperion
